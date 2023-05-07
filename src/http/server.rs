@@ -341,6 +341,21 @@ impl ApiHandler {
         let mut tiles = Vec::new();
         let mut image = ImageBuffer::new(width as u32, height as u32);
 
+        // draw map
+        for x in left..right {
+            for y in top..bottom {
+                let px = (x - left) as u32;
+                let py = (y - top) as u32;
+
+                tiles.clear();
+                dworld.query_tile_full(x, y, 0, &mut tiles);
+                let top_tile = tiles.last().unwrap();
+                let color = dworld.world_tile_color(&top_tile);
+
+                image.put_pixel(px, py, Rgb([color.0, color.1, color.2]));
+            }
+        }
+
         // draw points
         for &Point{x,y,z, w: extra } in points {
             if x < left || x >= right || y < top || y >= bottom {
@@ -357,24 +372,6 @@ impl ApiHandler {
             }
         }
 
-        // draw map
-        for x in left..right {
-            for y in top..bottom {
-                let px = (x - left) as u32;
-                let py = (y - top) as u32;
-
-                if image.get_pixel(px, py) != &Rgb([0, 0, 0]) {
-                    continue
-                };
-
-                tiles.clear();
-                dworld.query_tile_full(x, y, 0, &mut tiles);
-                let top_tile = tiles.last().unwrap();
-                let color = dworld.world_tile_color(&top_tile);
-
-                image.put_pixel(px, py, Rgb([color.0, color.1, color.2]));
-            }
-        }
 
         ApiResponse::RenderReply { image }
     }
