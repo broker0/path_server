@@ -263,6 +263,7 @@ impl<'a> WorldSurveyor<'a> {
         let y_accuracy = options.accuracy_y.unwrap_or(0);
         let z_accuracy = options.accuracy_z.unwrap_or(0);
 
+        let cost_limit = options.cost_limit.unwrap_or(isize::MAX);
         let cost_turn = options.cost_turn.unwrap_or(1);
         let cost_move_straight = options.cost_move_straight.unwrap_or(1);
         let cost_move_diagonal = options.cost_move_diagonal.unwrap_or(cost_move_straight);
@@ -398,6 +399,10 @@ impl<'a> WorldSurveyor<'a> {
                     } else {
                         if direction == curr_dir { cost_move_straight } else { cost_move_straight + cost_turn }
                     };
+
+                    if dest_gval > cost_limit {
+                        continue
+                    }
 
                     let dest_fval = dest_gval + h_func(&dest_pos);
                     let dest_scored = ScoredPosition(dest_fval, dest_gval, direction, dest_pos, curr_pos);

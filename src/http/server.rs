@@ -39,6 +39,7 @@ pub struct TraceOptions {
     pub all_points: Option<bool>,
     pub open_doors: Option<bool>,
     pub allow_diagonal_move: Option<bool>,
+    pub cost_limit: Option<isize>,
     // movement cost
     pub cost_turn: Option<isize>,
     pub cost_move_straight: Option<isize>,
@@ -61,6 +62,7 @@ impl TraceOptions {
             accuracy_y: None,
             accuracy_z: None,
             open_doors: None,
+            cost_limit: None,
             cost_turn: None,
             cost_move_straight: None,
             cost_move_diagonal: None,
