@@ -1,0 +1,62 @@
+function item_saver() {
+  Orion.IgnoreReset();
+
+  var item_cache = [];
+
+  var send_timer = Orion.Now();
+  var send_period = 1500;
+
+  while (true) {
+    var items = Orion.FindTypeEx('any', 'any', 'ground', 'all', 18);
+    if (items.length) {
+
+      for (var i = 0; i < items.length; i++) {
+        var obj = items[i];
+        if (obj.Mobile()) {
+          continue;
+        }
+        if (obj && obj.Graphic() !== 0 && obj.X() !== 0 && obj.Y() !== 0) {
+          var item = {
+            world: 0,
+            serial: Number(obj.Serial()),
+            x: obj.X(),
+            y: obj.Y(),
+            z: obj.Z(),
+            graphic: Number(obj.Graphic()),
+            //color: obj.Color(),
+            //quantity: obj.Count(),
+          };
+
+          if (obj.IsMulti()) {
+            item.graphic |= 0x4000;
+            Orion.Print("Found house");
+          }
+
+          item_cache.push(item);
+          Orion.Ignore(obj.Serial());
+        } else {
+          Orion.Print('Skipped serial ' + items[i].Serial());
+        }
+      }
+    }
+
+    if ((send_timer + send_period) < Orion.Now()) {
+      if (item_cache.length) {
+        var data = {
+          ItemsAdd: {
+            items: item_cache
+          }
+        };
+
+        Orion.Print('sending data...');
+        var req = Orion.HttpPost('http://127.0.0.1:3000/api/', JSON.stringify(data));
+        Orion.Print('...sent ' + data.ItemsAdd.items.length + ' items');
+      }
+
+      item_cache = [];
+      send_timer = Orion.Now();
+    }
+
+    Orion.Wait(50);
+  }
+}

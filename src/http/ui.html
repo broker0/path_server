@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <meta charset="UTF-8">
+      <title>Path server</title>
+      <style>
+            input {
+              width: 6ch;
+            }      
+            
+            .long {
+              width: 64ch;
+            }      
+            
+      </style>
+      <script>
+      
+        // world state functions
+        function WorldSave(file_name) {
+            return JSON.stringify({"WorldSave": {"file_name": file_name}})
+        }
+        
+        function WorldLoad(file_name) {
+            return JSON.stringify({"WorldLoad": {"file_name": file_name}})
+        }
+        
+        function WorldClear() {
+            return JSON.stringify({"WorldClear": {}})
+        }
+        
+        // items functions
+        function ItemsDel(serials) {
+            return JSON.stringify({"ItemsDel": {"serials": serials}})
+        }
+        
+        function ItemsAdd(items) {
+            return JSON.stringify({"ItemsAdd": {"items": items}})
+        }
+
+        // trace functions
+        function TracePath(world, sx, sy, sz, dx, dy, dz, options) {
+            return JSON.stringify({"TracePath": {"world": world, "sx": sx, "sy": sy, "sz": sz, "dx": dx, "dy": dy, "dz": dz, "options": options}})
+        }
+        
+        function TraceArea(world, x, y, z, options) {
+            return JSON.stringify({"TraceArea": {"world": world, "x": x, "y": y, "z": z, "options": options}})
+        }
+        
+        function RenderArea(world, left, top, right, bottom, color, points) {
+            return JSON.stringify({"RenderArea": {"world": world, "points": points, "color": color, "left": left, "top": top, "right": right, "bottom": bottom}})
+        }
+        
+      
+        function arrayBufferToBase64(buffer) {
+          var binary = '';
+          var bytes = new Uint8Array(buffer);
+          var len = bytes.byteLength;
+          for (var i = 0; i < len; i++) {
+            binary += String.fromCharCode(bytes[i]);
+          }
+          return btoa(binary);
+        }
+        
+        function api_request_json(json) {
+            return fetch('/api/', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: json,
+            }).then(response => response.json());
+        }
+
+        function api_request_bin(json) {
+            return fetch('/api/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: json,
+            }).then(response => response.arrayBuffer());
+        }
+        
+        function get_int(id) {
+            return parseInt(document.getElementById(id).value);
+        }
+        
+        function get_json(id) {
+            return JSON.parse(document.getElementById(id).value);
+        }
+
+        
+        function start() {
+            document.getElementById("trace_path").onclick = function() {
+                
+                var reply = api_request_json(
+                    TracePath(0, 
+                        get_int("sx"), get_int("sy"), get_int("sz"), 
+                        get_int("dx"), get_int("dy"), get_int("dz"),
+                        get_json("options"))
+                ).then(function(reply) {
+                    var options = get_json("options");
+                    var color = 16711935;   // magenta
+                    if (options.hasOwnProperty("all_points") && options["all_points"]) {
+                        color = null;
+                    };
+                            
+                    api_request_bin(
+                            RenderArea(
+                                0,  // world
+                                parseInt(document.getElementById("left").value), 
+                                parseInt(document.getElementById("top").value), 
+                                parseInt(document.getElementById("right").value), 
+                                parseInt(document.getElementById("bottom").value),
+                                color,
+                                reply["TraceReply"]["points"]    // points
+                            )                
+                    ).then(function(buffer) {
+                                var base64Flag = 'data:image/png;base64,';
+                                var imageStr = arrayBufferToBase64(buffer);
+
+                                document.querySelector('img').src = base64Flag + imageStr;
+                    });                
+                });
+            }
+            
+            document.getElementById("trace_area").onclick = function() {
+            };
+
+            document.getElementById("world_load").onclick = function() {
+                api_request_json(WorldLoad("test.save")).then(data => console.log(data));
+            };
+
+            document.getElementById("world_clear").onclick = function() {
+                api_request_json(WorldClear()).then(data => console.log(data));
+            
+            };
+            
+        };
+      </script>
+   </head>
+   <body onload="start()">
+      <div>
+         <h3>left-top margin (can be empty)</h3>
+         left: <input id="left" value="0"> top: <input id="top" value="0">
+      </div>
+      
+      <div>
+         <h3>start position</h3>
+         x: <input id="sx" value="1476"> y: <input id="sy" value="192"> z: <input id="sz" value="22">
+      </div>
+      
+      <div>
+         <h3>end position</h3>
+         x: <input id="dx" value="386"> y: <input id="dy" value="1320"> z: <input id="dz" value="0">
+      </div>
+      
+      <div>
+         <h3>right-bottom margin (can be empty)</h3>
+         right: <input id="right" value="1700"> bottom: <input id="bottom" value="1700">
+      </div>
+      
+      <div>
+        <h3>trace options:</h3>
+        <textarea cols="64" rows="16" id="options" class="long">
+{
+"allow_diagonal_move": true, 
+
+"heuristic_distance": "Diagonal",
+"heuristic_straight": 5,
+"heuristic_diagonal": 5,
+
+"cost_turn": 1,
+"cost_move_straight": 0,
+"cost_move_diagonal": 1,
+
+"left": 0,
+"top": 0,
+"right": 6144,
+"bottom": 4096,
+"all_points": false
+}
+        </textarea>
+      </div>
+      
+      <div>
+         <h3>send request</h3>
+         <input type="button" value="path" id="trace_path">
+         <input type="button" value="area" id="trace_area">
+         <input type="button" value="load" id="world_load">
+         <input type="button" value="clear" id="world_clear">
+      </div>
+      
+      <div>
+         <h3>results</h3>
+         <img src="">
+      </div>
+   </body>
+</html>
