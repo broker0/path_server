@@ -61,6 +61,20 @@ The query will not return parts of the multi-object, only the object itself.
 
 ## Pathfinding
 
+### TraceOptions
+Allows you to fine-tune the path search algorithm by setting the cost of movements, 
+the heuristics function, limit the search area.
+All fields are optional and allow you to change the default settings.
+
+{
+    "left": isize, "top": isize, "right": isize, "bottom": isize,
+    "accuracy_x": isize, "accuracy_y": isize, "accuracy_z": isize,
+    "cost_turn": isize, "cost_move_straight": isize, "cost_move_diagonal": isize,
+    "heuristic_distance": isize, "heuristic_straight": isize, "heuristic_diagonal": isize,
+    "all_points": isize, "open_doors": isize, "allow_diagonal_move": isize, "cost_limit": isize
+}
+
+
 ### Search the Path
 {"TracePath": 
     {"world": u8, 
