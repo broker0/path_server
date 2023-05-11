@@ -54,7 +54,6 @@ impl MulViewer {
             return (0, 0);
         }
 
-        // self.next_step = now;
         let surveyor = WorldSurveyor::new(self.world_model.world(self.current_world));
         let (old_x, old_y) = (self.current_x, self.current_y);
 
@@ -81,11 +80,13 @@ impl MulViewer {
             };
 
             if let Some(new_z) = z_dest {
+                // turn
                 if self.current_direction != direction {
                     self.next_step = now + Duration::from_millis(50);
                     self.current_direction = direction;
                     return (0, 0)
                 }
+                // step
                 self.next_step = now + Duration::from_millis(100);
                 (self.current_x, self.current_y) = WorldSurveyor::move_to(x, y, direction);
                 self.current_z = new_z;
@@ -120,12 +121,12 @@ impl MulViewer {
         (self.current_x-old_x, self.current_y-old_y)
     }
 
-    fn draw_area(&mut self, xc: i32, yc: i32, xw: i32, yw: i32, w: i32, h: i32, con: &mut Console) {
+    fn draw_area(&mut self, x_screen: i32, y_screen: i32, x_world: i32, y_world: i32, area_width: i32, area_height: i32, con: &mut Console) {
         let world = &self.world_model.world(self.current_world);
         let mut tiles = Vec::with_capacity(64);
 
-        for y in yw..yw + h {
-            for x in xw..xw + w {
+        for y in y_world..y_world + area_height {
+            for x in x_world..x_world + area_width {
                 tiles.clear();
                 world.query_tile_full(x as isize, y as isize, 0, &mut tiles);
 
@@ -173,7 +174,7 @@ impl MulViewer {
 
                     if draw_tile.is_none() {
                         con.cell(
-                            xc + x - xw, yc + y - yw,
+                            x_screen + x - x_world, y_screen + y - y_world,
                             Some(32),
                             Some((0,0,0,255)), Some((0,0,0,255)),
                         );
@@ -202,7 +203,7 @@ impl MulViewer {
                     };
 
                     con.cell(
-                        xc + x - xw, yc + y - yw,
+                        x_screen + x - x_world, y_screen + y - y_world,
                         Some(char_draw),
                         Some(fore), Some(tile_color),
                     )
@@ -249,23 +250,87 @@ impl Engine for MulViewer {
     }
 
     fn update(&mut self, api: &mut dyn DoryenApi) -> Option<UpdateEvent> {
+        let (width, height) = {
+            let con = api.con();
+            (con.get_width() as i32, con.get_height() as i32)
+        };
+
         let input = api.input();
         let mov_scale = if input.key("ShiftLeft") { 18 } else { 1 };
 
-        let dx = if input.key("ArrowLeft") {
-            -1 * mov_scale
-        } else if input.key("ArrowRight") {
-            1 * mov_scale
-        } else {
-            0
-        };
+        let (dx, dy) = if input.mouse_button(2) {
+            let mouse_pos = input.mouse_pos();
+            let (mx, my) = (mouse_pos.0 as i32, mouse_pos.1 as i32);
 
-        let dy = if input.key("ArrowUp") {
-            -1 * mov_scale
-        } else if input.key("ArrowDown") {
-            1 * mov_scale
+            let (x, y, z, direction) = (self.current_x as i32, self.current_y as i32, self.current_z, self.current_direction);
+
+            let map_margin: i32 = 1;
+
+            let center_x = (width - 1) / 2;
+            let center_y = (height - 1) / 2;
+
+            let (left, top) = (x - center_x + self.offset_x as i32, y - center_y + self.offset_y as i32);
+
+            let lcx = x as i32 - left;
+            let lcy = y as i32 - top;
+
+            let (cx, cy) = (map_margin + lcx, map_margin + lcy);
+
+            let (dx, dy) = ((mx-cx) as isize, (my-cy) as isize);
+
+
+            fn signum(n: isize) -> isize {
+                if n > 0 {
+                    1
+                } else if n < 0 {
+                    -1
+                } else {
+                    0
+                }
+            }
+
+            fn get_direction(dx: isize, dy: isize) -> (isize, isize) {
+                let dx_sign = signum(dx);
+                let dy_sign = signum(dy);
+                if dx == 0 || dy == 0 {
+                    return (signum(dx_sign), signum(dy_sign))
+                }
+                let slope_dx = dx.abs()*3 / dy.abs();
+                let slope_dy = dy.abs()*3 / dx.abs();
+
+                if slope_dx > 7 {
+                    (dx_sign, 0)
+                } else if slope_dy > 7 {
+                    (0, dy_sign)
+                } else {
+                    (dx_sign, dy_sign)
+                }
+            }
+
+
+            if mov_scale == 1 {
+                get_direction(dx, dy)
+            } else {
+                (dx, dy)
+            }
         } else {
-            0
+            let dx = if input.key("ArrowLeft") {
+                -1 * mov_scale
+            } else if input.key("ArrowRight") {
+                1 * mov_scale
+            } else {
+                0
+            };
+
+            let dy = if input.key("ArrowUp") {
+                -1 * mov_scale
+            } else if input.key("ArrowDown") {
+                1 * mov_scale
+            } else {
+                0
+            };
+
+            (dx, dy)
         };
 
         let (dx, dy) = self.control(dx, dy);
