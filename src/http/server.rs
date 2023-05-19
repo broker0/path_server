@@ -86,6 +86,7 @@ pub struct Item {
     pub x: isize,
     pub y: isize,
     pub z: i8,
+    pub last_updated: Option<u64>,
 }
 
 
@@ -268,7 +269,7 @@ impl ApiHandler {
         let since_epoch = start.duration_since(UNIX_EPOCH).expect("Failed to get current time");
         let current_time = since_epoch.as_secs();
 
-        for Item{ world, serial, graphic, x, y, z } in items {
+        for Item{ world, serial, graphic, x, y, z, .. } in items {
             self.world_model.insert_item(*world, *x, *y, *z, *serial, *graphic, current_time);
         }
         ApiResponse::Success {}

@@ -481,7 +481,7 @@ impl DynamicWorld {
                         match item {
                             &DynamicWorldObject::GameObject { x, y, z, serial, graphic } => {
                                 if x >= left && y >= top && x < right && y < bottom {
-                                    result.push(Item { world, serial, graphic, x, y, z, });
+                                    result.push(Item { world, serial, graphic, x, y, z, last_updated: None, });
                                 }
                             }
 

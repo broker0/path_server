@@ -148,6 +148,16 @@ impl WorldModel {
 
         let s = Instant::now();
         d_world.query_area_dynamic(world, left, top, right, bottom, items);
+        {
+            let index = self.items_index.read().unwrap();
+            for item in items.iter_mut() {
+                match index.get(&item.serial) {
+                    Some(index_item) => item.last_updated = Some(index_item.last_updated),
+                    None => println!("Cannot find item with serial {}", item.serial),
+                }
+            }
+        }
+
         println!("({left}, {top})-({right}, {bottom}) found {} items at {:?}", items.len(), s.elapsed());
     }
 }
