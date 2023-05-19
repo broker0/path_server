@@ -73,25 +73,11 @@ pub fn uop_hash(mut src: &[u8]) -> u64 {
 }
 
 fn partial_read_u32(s: &[u8]) -> Wrapping<u32> {
-    let l = s.len();
-    let mut v = 0;
+    let a = *s.get(0).unwrap_or(&0) as u32;
+    let b = *s.get(1).unwrap_or(&0) as u32;
+    let c = *s.get(2).unwrap_or(&0) as u32;
+    let d = *s.get(3).unwrap_or(&0) as u32;
 
-    if l > 0 {
-        v |= s[0] as u32;
-    }
-
-    if l > 1 {
-        v |= (s[1] as u32) << 8;
-    }
-
-    if l > 2 {
-        v |= (s[2] as u32) << 16;
-    }
-
-    if l > 3 {
-        v |= (s[3] as u32) << 24;
-    }
-
-    Wrapping(v)
+    Wrapping(a | (b << 8) | (c << 16) | (d << 24))
 }
 

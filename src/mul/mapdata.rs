@@ -79,7 +79,7 @@ impl Land {
         assert_eq!(magic, 0x0050594D, "file signature is invalid");
 
         f.seek(SeekFrom::Start(uop_header.next_block_offset))?;
-        let uop_entry_header = UopEntryHeader { // Unused data but needs to be read
+        UopEntryHeader { // Unused data but needs to be read
             entry_count: mul_read_u32(f)?,
             next_block_offset: mul_read_u64(f)?,
         };
@@ -103,16 +103,16 @@ impl Land {
         while result.blocks.len() < max_block {
             let next_block = result.blocks.len();
             let entry_num = next_block >> 12;
-            let file_name = format!("build/map{world}legacymul/{entry_num:08}.dat");
-            let hash = uop_hash(file_name.as_bytes());
+            let chunk_name = format!("build/map{world}legacymul/{entry_num:08}.dat");
+            let entry_hash = uop_hash(chunk_name.as_bytes());
 
-            if entries.contains_key(&hash) {
-                let entry = entries.get(&hash).unwrap();
+            if entries.contains_key(&entry_hash) {
+                let entry = entries.get(&entry_hash).unwrap();
                 let data_offset = entry.data_offset + entry.header_length as u64;
                 let data_size = entry.decompressed_length as usize;
                 let blocks = data_size / MUL_MAP_BLOCK_SIZE;
                 debug_assert_eq!(data_size % MUL_MAP_BLOCK_SIZE , 0, "file will not be read completely");
-                // println!("{file_name} with hash {hash} with {blocks} blocks found!");
+                // println!("{chunk_name} with hash {hash} with {blocks} blocks found!");
 
                 f.seek(SeekFrom::Start(data_offset))?;
 
@@ -122,7 +122,7 @@ impl Land {
                     result.read_block(f)?;
                 }
             } else {
-                panic!("!! chunk with hash={hash} for block {next_block} not found!!");
+                panic!("!! chunk with hash={entry_hash} for block {next_block} not found!!");
             }
         }
 
