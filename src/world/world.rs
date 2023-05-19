@@ -23,13 +23,23 @@ pub struct StaticWorld {
 impl StaticWorld {
     pub fn read(world: u8, width_blocks: usize, height_blocks: usize) -> Self {
         let map_path = &*format!("map{world}.mul");
+        let map_uop_path = &*format!("map{world}LegacyMUL.uop");
         let static_idx_path = &*format!("staidx{world}.mul");
         let static_data_path = &*format!("statics{world}.mul");
+
+        // let land = Land::read(map_path, width_blocks, height_blocks).unwrap();
+        let land = Land::read(map_path, width_blocks, height_blocks);
+        let land = if land.is_ok() {
+            land.unwrap()
+        } else {
+            println!("error while read file {map_path}, try use {map_uop_path}");
+            Land::read_uop(map_uop_path, width_blocks, height_blocks, world).unwrap()
+        };
 
         Self {
             width_blocks,
             height_blocks,
-            land: Land::read(map_path, width_blocks, height_blocks).unwrap(),
+            land,
             statics: Static::read(static_idx_path, static_data_path, width_blocks, height_blocks).unwrap(),
         }
     }

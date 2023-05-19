@@ -163,6 +163,67 @@ struct Map0 {
 }
 ```
 
+## Map#LegacyMUL.uop format
+
+The data in this file is not compressed and doesn't look much like regular map#.mul files, 
+but the data is split into chunks and stored separately from each other. 
+Completely useless format.
+
+```rust
+
+struct UopHeader {
+    magic: u32,
+    version: u32,
+    timestamp: u32,
+    next_block_offset: u64,
+    block_size: u32,
+    entry_count: u32,
+}
+
+struct UopEntryHeader {
+    entry_count: u32,
+    next_block_offset: u64,
+}
+
+struct UopEntry {
+    data_offset: u64,
+    header_length: u32,
+    compressed_length: u32,
+    decompressed_length: u32,
+    entry_hash: u64,
+    crc: u32,
+    is_compressed: u16,
+}
+```
+
+The file starts with `UopHeader`, `magic` field is 0x50594D, the `version` field is 5.
+
+We are interested in the values of `entry_count` and `next_block_offset`.
+
+Offset `next_block_offset` is where `UopEntryHeader` and `entry_count` elements of `UopEntry` are located
+
+The map data is divided into `UopHeader.entry_count` blocks, each of which is described by the `UopEntry` structure.
+
+The data is at offset `UopEntry.data_offset` + `UopEntry.header_length`, and has a size in bytes `UopEntry.compressed_length`-`UopEntry.header_length`.
+
+Inside this data, `MapBlock` structures lie continuously, their number can be determined by dividing the data size by the `MapBlock` size, it must be divided without a remainder.
+
+What is in the header before the data is unknown to me.
+
+These `UopEntry`s themselves are out of block order, each `UopEntry` has a `entry_hash` field 
+with a hash corresponding to the chunk name. 
+
+The chunk name looks like this `"build/map{world}legacymul/{entry_num:08}.dat"` where `world` is the number of the world from 0 to 5, and `entry_num` is the number of the block chunk.
+
+`entry_num` is calculated as `block_num >> 12`. The full name of the chunk looks like this "build/map2legacymul/00000000.dat". 
+
+And `block_num` is calculated in the usual way - x*height+y
+
+Most chunks hold 4096 blocks, but the last block may have fewer. 
+But you still need to count the number of read blocks, 
+you cannot rely on exactly the required amount of data in the block.
+
+
 ## Static
 
 Statics data is stored in two files - staidx<N>.mul and statics<N>.mul
@@ -220,3 +281,5 @@ pub struct MultiTile {
     flags: u32,
 }
 ```
+
+

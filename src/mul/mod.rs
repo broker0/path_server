@@ -1,6 +1,7 @@
 pub mod mulreader;
 pub mod tiledata;
 pub mod mapdata;
+pub mod uop_mapdata;
 pub mod staticdata;
 pub mod multidata;
 pub mod colordata;
@@ -25,5 +26,3 @@ pub use tiledata::TileData;
 pub use mapdata::Land;
 pub use staticdata::Static;
 pub use multidata::Multi;
-// pub use world::WorldSource;
-// pub use colordata::
