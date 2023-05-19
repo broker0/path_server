@@ -90,8 +90,8 @@ impl WorldModel {
         self.clear_state();
         let items: HashMap<u32, TopLevelItem> = serde_json::from_str(&state).unwrap();
 
-        for (_, TopLevelItem{ world, x, y, z, serial, graphic }) in items {
-            self.insert_item(world, x, y, z, serial, graphic);
+        for (_, TopLevelItem{ world, x, y, z, serial, graphic, last_updated}) in items {
+            self.insert_item(world, x, y, z, serial, graphic, last_updated);
         }
     }
 
@@ -100,8 +100,8 @@ impl WorldModel {
         let mut items = HashMap::new();
         {   // we must drop ReadGuard before delete items
             let index = self.items_index.read().unwrap();
-            for (&key, &TopLevelItem{ world, x, y, z, serial, graphic }) in index.iter() {
-                items.insert(key, TopLevelItem{ world, x, y, z, serial, graphic, });
+            for (&key, &TopLevelItem{ world, x, y, z, serial, graphic, last_updated }) in index.iter() {
+                items.insert(key, TopLevelItem{ world, x, y, z, serial, graphic, last_updated });
             }
         }
 
@@ -116,7 +116,7 @@ impl WorldModel {
         let mut index = self.items_index.write().unwrap();
         let item = index.get(&serial);
 
-        if let Some(&TopLevelItem{ world, x, y, z, serial, graphic }) = item {
+        if let Some(&TopLevelItem{ world, x, y, z, serial, graphic, .. }) = item {
             let world = self.world(world);
             world.delete_item(x, y, z, serial, graphic);
             index.remove(&serial);
@@ -125,19 +125,19 @@ impl WorldModel {
     }
 
 
-    pub fn insert_item(&self, world: u8, x: isize, y: isize, z: i8, serial: u32, graphic: u16) {
+    pub fn insert_item(&self, world: u8, x: isize, y: isize, z: i8, serial: u32, graphic: u16, last_updated: u64) {
         let mut index = self.items_index.write().unwrap();
         let world_model = self.world(world);
 
         // delete old item
         let old = index.remove(&serial);
-        if let Some(TopLevelItem{ world, x, y, z, serial, graphic }) = old {
+        if let Some(TopLevelItem{ world, x, y, z, serial, graphic , .. }) = old {
             let world_model = self.world(world);
             world_model.delete_item(x, y, z, serial, graphic);
         }
 
         // insert new
-        index.insert(serial, TopLevelItem{world, x, y, z, serial, graphic, });
+        index.insert(serial, TopLevelItem{world, x, y, z, serial, graphic, last_updated});
 
         world_model.insert_item(x, y, z, serial, graphic, );
     }

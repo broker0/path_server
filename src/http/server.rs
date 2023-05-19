@@ -2,6 +2,7 @@ use std::convert::Infallible;
 use std::io::{Cursor};
 use std::net::SocketAddr;
 use std::sync::Arc;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use tokio;
 use tokio::sync::oneshot::Receiver;
@@ -262,8 +263,13 @@ impl ApiHandler {
 
     fn handle_items_add(&self, items: &Vec<Item>) -> ApiResponse {
         println!("Api::item_add {} items", items.len());
+
+        let start = SystemTime::now();
+        let since_epoch = start.duration_since(UNIX_EPOCH).expect("Failed to get current time");
+        let current_time = since_epoch.as_secs();
+
         for Item{ world, serial, graphic, x, y, z } in items {
-            self.world_model.insert_item(*world, *x, *y, *z, *serial, *graphic);
+            self.world_model.insert_item(*world, *x, *y, *z, *serial, *graphic, current_time);
         }
         ApiResponse::Success {}
     }

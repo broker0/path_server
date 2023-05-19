@@ -246,4 +246,6 @@ pub struct TopLevelItem {
     pub z: i8,
     pub serial: u32,
     pub graphic: u16,
+    #[serde(default)]
+    pub last_updated: u64,
 }
