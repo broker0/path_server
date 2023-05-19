@@ -48,6 +48,16 @@ pub fn mul_read_i32<R: Read>(reader: &mut R) -> Result<i32, Error> {
     Ok(i32::from_le_bytes(buff))
 }
 
+
+#[inline]
+pub fn mul_read_u64<R: Read>(reader: &mut R) -> Result<u64, Error> {
+    type V = u64;
+    let mut buff = [0; mem::size_of::<V>()];
+    reader.read_exact(&mut buff)?;
+    Ok(V::from_le_bytes(buff))
+}
+
+
 #[inline]
 pub fn mul_read_fixed_str20<R: Read>(reader: &mut R) -> Result<[u8; 20], Error> {
     let mut buff = [0; 20];
