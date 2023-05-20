@@ -344,6 +344,14 @@ impl Engine for MulViewer {
             self.offset_y = 0;
         }
 
+        if input.key_pressed("Tab") {
+            if self.current_world == 0 {
+                self.current_world = 2
+            } else {
+                self.current_world = 0
+            }
+        }
+
         None
     }
 
