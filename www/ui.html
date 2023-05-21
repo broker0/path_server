@@ -4,17 +4,27 @@
       <meta charset="UTF-8">
       <title>Path server</title>
       <style>
-            input {
+            body {
+              margin: 0;
+              padding: 20px;
+              background-color: #f1f1f1;
+              font-family: Arial, sans-serif;
+            }
+            
+            .short {
               width: 6ch;
             }      
             
-            .long {
-              width: 64ch;
-            }      
+            #container {
+              display: flex;
+            }
             
+            .column {
+                flex: 1;
+                padding: 10px;
+            }
       </style>
       <script>
-      
         // world state functions
         function WorldSave(file_name) {
             return JSON.stringify({"WorldSave": {"file_name": file_name}})
@@ -125,11 +135,14 @@
                 });
             }
             
-            document.getElementById("trace_area").onclick = function() {
+            document.getElementById("world_save").onclick = function() {
+                var file_name = document.getElementById("file_name").value;
+                api_request_json(WorldSave(file_name)).then(data => console.log(data));
             };
 
             document.getElementById("world_load").onclick = function() {
-                api_request_json(WorldLoad("test.save")).then(data => console.log(data));
+                var file_name = document.getElementById("file_name").value;
+                api_request_json(WorldLoad(file_name)).then(data => console.log(data));
             };
 
             document.getElementById("world_clear").onclick = function() {
@@ -141,29 +154,39 @@
       </script>
    </head>
    <body onload="start()">
-      <div>
-         <h3>left-top render area margin (can be empty)</h3>
-         left: <input id="left" value="0"> top: <input id="top" value="0">
-      </div>
-      
-      <div>
-         <h3>start position</h3>
-         x: <input id="sx" value="1476"> y: <input id="sy" value="192"> z: <input id="sz" value="22">
-      </div>
-      
-      <div>
-         <h3>end position</h3>
-         x: <input id="dx" value="386"> y: <input id="dy" value="1320"> z: <input id="dz" value="0">
-      </div>
-      
-      <div>
-         <h3>right-bottom render area margin (can be empty)</h3>
-         right: <input id="right" value="1700"> bottom: <input id="bottom" value="1700">
-      </div>
-      
-      <div>
-        <h3>trace options:</h3>
-        <textarea cols="64" rows="16" id="options" class="long">
+
+
+      <div id="container">
+        <div class="column">
+          <div>
+             <h3>world managment</h3>
+             <input type="button" value="clear" id="world_clear">
+             <input type="button" value="load" id="world_load">
+             <input type="button" value="save" id="world_save">
+             file name: <input id="file_name" value="test.save" style="width: 16ch">
+          </div>
+          
+          <div>
+             <h3>render area</h3>
+             
+             <h4>left-top render area margin (can be empty)</h4>
+             left: <input id="left" value="" class="short"> top: <input id="top" value="" class="short">
+
+             <h4>right-bottom render area margin (can be empty)</h4>
+             right: <input id="right" value="" class="short"> bottom: <input id="bottom" value="" class="short">
+          </div>
+          
+          <div>
+             <h3>path finding</h3>
+             
+             <h4>start position</h4>
+             x: <input id="sx" value="2155" class="short"> y: <input id="sy" value="3618" class="short"> z: <input id="sz" value="0" class="short">
+             
+             <h4>end position</h4>
+             x: <input id="dx" value="3425" class="short"> y: <input id="dy" value="105" class="short"> z: <input id="dz" value="0" class="short">
+
+            <h4>trace options:</h4>
+            <textarea cols="64" rows="16" id="options">
 {
 "allow_diagonal_move": true, 
 
@@ -181,20 +204,21 @@
 "bottom": 4096,
 "all_points": false
 }
-        </textarea>
+            </textarea>
+            
+             <br>
+             <input type="button" value="search the path!" id="trace_path">
+             <!-- <input type="button" value="area" id="trace_area"> -->
+          </div>
+        </div>
+        
+        <div class="column">
+          <div>
+             <h3>pathfinding results</h3>
+             <img src="">
+          </div>
+        </div>
       </div>
       
-      <div>
-         <h3>send request</h3>
-         <input type="button" value="path" id="trace_path">
-         <input type="button" value="area" id="trace_area">
-         <input type="button" value="load" id="world_load">
-         <input type="button" value="clear" id="world_clear">
-      </div>
-      
-      <div>
-         <h3>results</h3>
-         <img src="">
-      </div>
    </body>
 </html>
