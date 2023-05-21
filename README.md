@@ -12,11 +12,15 @@ Of course, api provides the ability to calculate paths between any point in the 
 
 And additionally, you can render part or all of the world map and display the path found on it in png format.
 
-There is a simple graphical interface for exploring the world, controlled by `arrows`, `ctrl` and `left shift` keys.
+There is a simple graphical interface for exploring the world, controlled by `arrows`, `ctrl` and `left shift` keys and mouse.
 
-![screen shot](examples/screenshot.png "Title")
+
+![screen shot](examples/screenshot.png "standalone ui")
 
 In addition, there is web-ui available at  <http://127.0.0.1:3000/ui/>
+
+![screen shot](examples/screenshot_web.png "web ui")
+
 
 ## Building and launch
 
