@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: [x86_64-pc-windows-gnu, x86_64-unknown-linux-gnu, x86_64-apple-darwin, aarch64-apple-darwin]
+        target: [x86_64-pc-windows-gnu, x86_64-unknown-linux-musl, x86_64-apple-darwin, aarch64-apple-darwin]
     steps:
       - uses: actions/checkout@master
       - name: Compile and release
@@ -21,4 +21,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           RUSTTARGET: ${{ matrix.target }}
-          EXTRA_FILES: "README.md www/terminal_8x8.png"
+          EXTRA_FILES: "README.md www/terminal_8x8.png www/ui.html"
