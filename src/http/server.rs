@@ -1,4 +1,5 @@
 use std::convert::Infallible;
+use std::fs;
 use std::io::{Cursor};
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -394,14 +395,12 @@ async fn handle_request(api: Arc<ApiHandler>, req: Request<Body>) -> Result<Resp
     }
 
     if req.method() == Method::GET && req.uri().path() == "/ui/" {
-        // TODO do not include the file in the binary, but read from the file
-        let bytes = include_bytes!("ui.html");
-        let html = String::from_utf8_lossy(bytes);
-        let response = Response::builder()
-            .body(Body::from(html))
-            .unwrap();
-
-        return Ok(response)
+        if let Ok(file_contents) = fs::read_to_string("www/ui.html") {
+            let response = Response::builder()
+                .body(Body::from(file_contents))
+                .unwrap();
+            return Ok(response);
+        }
     }
 
     let response = Response::builder()
