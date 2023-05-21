@@ -3,7 +3,6 @@ use std::collections::{BTreeSet, HashMap};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
-use crate::colordata::ColorData;
 use crate::world::{WorldModel, WorldTile};
 
 use mul::*;

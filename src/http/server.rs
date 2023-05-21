@@ -386,7 +386,7 @@ impl ApiHandler {
         }
 
         // draw points
-        for &Point{x,y,z, w: extra } in points {
+        for &Point{x,y,z, .. } in points {
             if x < left || x >= right || y < top || y >= bottom {
                 continue
             };

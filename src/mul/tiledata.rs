@@ -4,7 +4,6 @@ use std::fs::File;
 use std::io::{Error, Seek};
 use std::io::BufReader;
 use std::mem;
-use std::str;
 
 /*
     mul file raw structures, full set of fields
@@ -139,11 +138,6 @@ pub struct TileData {
 }
 
 impl TileData {
-    pub fn read_hs() {
-
-    }
-
-
     pub fn read() -> Result<Self, Error> {
         let mut result = TileData {
             land_tiles: Vec::with_capacity(16384),
@@ -165,7 +159,7 @@ impl TileData {
         // total 512*32=16384 tiles
         const LAND_TILES: i32 = 0x4000;
         for i in 0..LAND_TILES {
-            //
+            // TODO make reading different versions more understandable
             if is7090 {
                 if i == 1 || i > 0 && (i & 0x1F) == 0 {
                     let _header = mul_read_u32(f)?;   // unknown _header
