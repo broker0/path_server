@@ -328,12 +328,31 @@ impl ApiHandler {
     #[allow(dead_code)]
     async fn handle_render_area(&self, world: u8, left: Option<isize>, top: Option<isize>, right: Option<isize>, bottom: Option<isize>, color: Option<isize>, points: &Vec<Point>) -> ApiResponse {
         // TODO do rendering in a separate thread, as well as path calculation
-        let dworld = self.world_model.world(world);
+        let curr_world = self.world_model.world(world);
 
-        let left = left.unwrap_or(0);
-        let top = top.unwrap_or(0);
-        let right = right.unwrap_or(dworld.base.width() as isize);
-        let bottom = bottom.unwrap_or(dworld.base.width() as isize);
+        let (bound_left, bound_top, bound_right, bound_bottom) = if points.len() > 0 {
+            let mut left = isize::MAX;
+            let mut top = isize::MAX;
+            let mut right = isize::MIN;
+            let mut bottom = isize::MIN;
+
+            for point in points {
+                left = left.min(point.x);
+                top = top.min(point.y);
+
+                right = right.max(point.x);
+                bottom = bottom.max(point.y);
+            }
+
+            (left-100, top-100, right+100, bottom+100)
+        } else {
+            (0, 0, curr_world.base.width() as isize, curr_world.base.height() as isize)
+        };
+
+        let left = left.unwrap_or(bound_left);
+        let top = top.unwrap_or(bound_top);
+        let right = right.unwrap_or(bound_right);
+        let bottom = bottom.unwrap_or(bound_bottom);
         println!("Api::render_area world {world}, area: {left}, {top} - {right}, {bottom}");
 
         // if no color is passed to the function, use the default value -1, this value is treated as a special case
@@ -358,9 +377,9 @@ impl ApiHandler {
                 let py = (y - top) as u32;
 
                 tiles.clear();
-                dworld.query_tile_full(x, y, 0, &mut tiles);
+                curr_world.query_tile_full(x, y, 0, &mut tiles);
                 let top_tile = tiles.last().unwrap();
-                let color = dworld.world_tile_color(&top_tile);
+                let color = curr_world.world_tile_color(&top_tile);
 
                 image.put_pixel(px, py, Rgb([color.0, color.1, color.2]));
             }
