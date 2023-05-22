@@ -31,10 +31,6 @@ class PathApi:
                                  "options": self.options.opts()}}
         return self.api_request(request)
 
-    def TraceArea(self, world, x, y, z):
-        request = {"TraceArea": {"world": world, "x": x, "y": y, "z": z, "options": self.options.opts()}}
-        return self.api_request(request)
-
     def RenderArea(self, world, left, top, right, bottom, points, color=None):
         request = {
             "RenderArea": {"world": world, "points": points, "color": color, "left": left, "top": top, "right": right,

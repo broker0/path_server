@@ -112,7 +112,6 @@ pub enum ApiRequest {
     Query{world: u8, left: isize, top: isize, right: isize, bottom: isize, },
 
     TracePath{world: u8, sx: isize, sy: isize, sz: i8, dx: isize, dy: isize, dz: i8, options: TraceOptions, },
-    TraceArea{world: u8, x: isize, y: isize, z: i8, options: TraceOptions, },
 
     RenderArea{world: u8, left: Option<isize>, top: Option<isize>, right: Option<isize>, bottom: Option<isize>, color: Option<isize>, points: Vec<Point>, },
 }
@@ -180,8 +179,6 @@ impl ApiHandler {
 
                     ApiRequest::TracePath{world, sx, sy, sz, dx, dy, dz, options}
                         => self.handle_trace_path(world, sx, sy, sz, dx, dy, dz, &options).await,
-                    ApiRequest::TraceArea{world, x, y, z, options}
-                        => self.handle_trace_area(world, x, y, z, &options).await,
 
                     ApiRequest::RenderArea {world, left, top, right, bottom, color, points}
                         => self.handle_render_area(world, left, top, right, bottom, color, &points).await,
@@ -305,25 +302,6 @@ impl ApiHandler {
         ApiResponse::TraceReply { points }
     }
 
-
-    #[allow(dead_code)]
-    async fn handle_trace_area(&self, world: u8, x: isize, y: isize, z: i8, options: &TraceOptions) -> ApiResponse {
-        println!("Api::trace_area world {world}, from {x}, {y}, {z}");
-        let model = self.world_model.clone();
-
-        let options = options.clone();
-        let task = tokio::task::spawn_blocking(move || {
-            let mut points = Vec::new();
-            let world = model.world(world);
-            let surv = WorldSurveyor::new(world);
-            surv.trace_area(x, y, z, x, y, z, &mut points, &options);
-            points
-        });
-
-        let points = task.await.unwrap();
-
-        ApiResponse::TraceReply { points }
-    }
 
     #[allow(dead_code)]
     async fn handle_render_area(&self, world: u8, left: Option<isize>, top: Option<isize>, right: Option<isize>, bottom: Option<isize>, color: Option<isize>, points: &Vec<Point>) -> ApiResponse {

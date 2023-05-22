@@ -52,10 +52,6 @@
             return JSON.stringify({"TracePath": {"world": world, "sx": sx, "sy": sy, "sz": sz, "dx": dx, "dy": dy, "dz": dz, "options": options}})
         }
         
-        function TraceArea(world, x, y, z, options) {
-            return JSON.stringify({"TraceArea": {"world": world, "x": x, "y": y, "z": z, "options": options}})
-        }
-        
         function RenderArea(world, left, top, right, bottom, color, points) {
             return JSON.stringify({"RenderArea": {"world": world, "points": points, "color": color, "left": left, "top": top, "right": right, "bottom": bottom}})
         }
