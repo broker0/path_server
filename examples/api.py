@@ -26,6 +26,10 @@ class PathApi:
         request = {"ItemsDel": {"serials": serials}}
         return self.api_request(request)
 
+    def Query(self, world, left, top, right, bottom):
+        request = {"Query": {"world": world, "left": left, "top": top, "right": right, "bottom": bottom}}
+        return self.api_request(request)
+
     def TracePath(self, world, sx, sy, sz, dx, dy, dz):
         request = {"TracePath": {"world": world, "sx": sx, "sy": sy, "sz": sz, "dx": dx, "dy": dy, "dz": dz,
                                  "options": self.options.opts()}}
@@ -76,4 +80,3 @@ class TraceOptions:
 
     def opts(self):
         return {k: v for (k, v) in self.__dict__.items() if v is not None}
-

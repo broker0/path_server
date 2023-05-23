@@ -34,7 +34,7 @@ Completely clears the world of dynamic items
 ### Add items
 {"ItemsAdd": {"items": [{"world": u8, serial": u32, "x": isize, "y": isize, "z": i8, "graphic": u16}, ...]}}
 ->
-{"Success":{}}
+{"Success": {}}
 
 Adds an items with the specified parameters to the world. 
 If an item with that `serial` already exists, then the old copy will be deleted.
@@ -46,18 +46,29 @@ if the object is a multi-object, then its parts are added to the world.
 ### Delete item
 {"ItemsDel": {"serials": [u32, ...]}}
 ->
-{"Success":{}}
+{"Success": {}}
 
 Removes the item with the specified `serials` from the world.
 
 if the object is multi-object, then all its parts will be removed from the world.
 
 ## Querying
-TODO    
+{"Query": {"left": isize, "top": isize, "right": isize, "bottom": isize}}
+->
+{"QueryReply": {"items": [{"world": u8, serial": u32, "x": isize, "y": isize, "z": i8, "graphic": u16, "timestamp": u64}, ...]}}
 
 Searches for items in the specified area.
 
-The query will not return parts of the multi-object, only the object itself.
+The response will include items with coordinates
+`left <= item.x < right`
+`top <= item.y < bottom`
+
+In general, the response contains the same that was added using `ItemsAdd`, 
+but includes an additional field `timestamp` - the time the item was last updated.
+
+The query will not return parts of the multi-object, only the game objects.
+
+Also for multi-objects the `graphic` field will be set to 0x0000.
 
 ## Pathfinding
 

@@ -247,5 +247,5 @@ pub struct TopLevelItem {
     pub serial: u32,
     pub graphic: u16,
     #[serde(default)]
-    pub last_updated: u64,
+    pub timestamp: u64,
 }

@@ -90,7 +90,7 @@ impl WorldModel {
         self.clear_state();
         let items: HashMap<u32, TopLevelItem> = serde_json::from_str(&state).unwrap();
 
-        for (_, TopLevelItem{ world, x, y, z, serial, graphic, last_updated}) in items {
+        for (_, TopLevelItem{ world, x, y, z, serial, graphic, timestamp: last_updated }) in items {
             self.insert_item(world, x, y, z, serial, graphic, last_updated);
         }
     }
@@ -100,8 +100,8 @@ impl WorldModel {
         let mut items = HashMap::new();
         {   // we must drop ReadGuard before delete items
             let index = self.items_index.read().unwrap();
-            for (&key, &TopLevelItem{ world, x, y, z, serial, graphic, last_updated }) in index.iter() {
-                items.insert(key, TopLevelItem{ world, x, y, z, serial, graphic, last_updated });
+            for (&key, &TopLevelItem{ world, x, y, z, serial, graphic, timestamp: last_updated }) in index.iter() {
+                items.insert(key, TopLevelItem{ world, x, y, z, serial, graphic, timestamp: last_updated });
             }
         }
 
@@ -137,7 +137,7 @@ impl WorldModel {
         }
 
         // insert new
-        index.insert(serial, TopLevelItem{world, x, y, z, serial, graphic, last_updated});
+        index.insert(serial, TopLevelItem{world, x, y, z, serial, graphic, timestamp: last_updated });
 
         world_model.insert_item(x, y, z, serial, graphic, );
     }
@@ -152,7 +152,7 @@ impl WorldModel {
             let index = self.items_index.read().unwrap();
             for item in items.iter_mut() {
                 match index.get(&item.serial) {
-                    Some(index_item) => item.last_updated = Some(index_item.last_updated),
+                    Some(index_item) => item.timestamp = Some(index_item.timestamp),
                     None => println!("Cannot find item with serial {}", item.serial),
                 }
             }

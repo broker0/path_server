@@ -87,7 +87,7 @@ pub struct Item {
     pub x: isize,
     pub y: isize,
     pub z: i8,
-    pub last_updated: Option<u64>,
+    pub timestamp: Option<u64>,
 }
 
 
@@ -109,7 +109,7 @@ pub enum ApiRequest {
     ItemsDel {serials: Vec<u32>, },
     ItemsAdd {items: Vec<Item>, },
 
-    Query{world: u8, left: isize, top: isize, right: isize, bottom: isize, },
+    Query {world: u8, left: isize, top: isize, right: isize, bottom: isize, },
 
     TracePath{world: u8, sx: isize, sy: isize, sz: i8, dx: isize, dy: isize, dz: i8, options: TraceOptions, },
 
@@ -119,12 +119,12 @@ pub enum ApiRequest {
 
 #[derive(Serialize, Deserialize)]
 pub enum ApiResponse {
-    Success{},
-    Error{err: String, },
-    QueryReply{items: Vec<Item>, },
-    TraceReply{points: Vec<Point>, },
+    Success { },
+    Error { err: String, },
+    QueryReply {items: Vec<Item>, },
+    TraceReply { points: Vec<Point>, },
     #[serde(skip_serializing, skip_deserializing)]
-    RenderReply{image: ImageBuffer<Rgb<u8>, Vec<u8>> },
+    RenderReply { image: ImageBuffer<Rgb<u8>, Vec<u8>> },
 }
 
 
@@ -174,7 +174,7 @@ impl ApiHandler {
                     ApiRequest::ItemsAdd {items}
                         => self.handle_items_add(&items),
 
-                    ApiRequest::Query{world, left, top, right, bottom}
+                    ApiRequest::Query {world, left, top, right, bottom}
                         => self.handle_query(world, left, top, right, bottom),
 
                     ApiRequest::TracePath{world, sx, sy, sz, dx, dy, dz, options}

@@ -1,10 +1,9 @@
 use std::cmp::{Ordering};
-use std::collections::{BinaryHeap, BTreeSet, HashMap, HashSet, VecDeque};
+use std::collections::{BinaryHeap, HashMap, HashSet, VecDeque};
 use std::collections::hash_map::{Entry};
 use std::time::Instant;
 
 use crate::http::server::{DistanceFunc, Point, TraceOptions};
-use crate::world::quadtree::QuadTree;
 use crate::world::{DynamicWorld, TileShape, WorldTile};
 
 

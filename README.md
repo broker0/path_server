@@ -15,7 +15,7 @@ This program is designed to finding paths in Ultima Online.
 
 It allows you to search paths taking into account various game items.
 
-Using the http json api at <http://127.0.0.1/api/> you can add this data about these objects using clients such as Orion or Stealth, with the ability to save and load the state of the world later.
+Using the [http json api](src/http/API.md) at <http://127.0.0.1/api/> you can add this data about these objects using clients such as Orion or Stealth, with the ability to save and load the state of the world later.
 
 Of course, api provides the ability to calculate paths between any point in the world, with the ability to fine-tune the parameters.
 
