@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::{Read, Write};
 use std::sync::{Arc, RwLock};
+use log::{debug, warn};
 use crate::world::DynamicWorld;
 
 use tokio::time::Instant;
@@ -153,11 +154,11 @@ impl WorldModel {
             for item in items.iter_mut() {
                 match index.get(&item.serial) {
                     Some(index_item) => item.timestamp = Some(index_item.timestamp),
-                    None => println!("Cannot find item with serial {}", item.serial),
+                    None => warn!("Cannot find item with serial {}", item.serial),
                 }
             }
         }
 
-        println!("({left}, {top})-({right}, {bottom}) found {} items at {:?}", items.len(), s.elapsed());
+        debug!("({left}, {top})-({right}, {bottom}) found {} items at {:?}", items.len(), s.elapsed());
     }
 }

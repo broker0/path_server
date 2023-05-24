@@ -4,6 +4,7 @@ use std::fs::File;
 use std::io::Error;
 use std::io::BufReader;
 use std::mem;
+use log::{debug, trace};
 use crate::mul::{LOOKUP_IDX_RECORD_SIZE, MulLookupIndexRecord};
 
 
@@ -35,6 +36,7 @@ pub struct Multi {
 
 impl Multi {
     pub fn read() -> Result<Self, Error> {
+        trace!("Multi::read");
         let f = File::open("multi.mul")?;
         let f_size = f.metadata()?.len();
         let f = &mut BufReader::new(f);
@@ -53,7 +55,7 @@ impl Multi {
             parts: Vec::with_capacity(multi_tiles_count),
         };
 
-        for _ in 0..multi_idx_count {
+        for i in 0..multi_idx_count {
             let idx = MulLookupIndexRecord {
                 offset: mul_read_u32(fi)?,
                 length: mul_read_u32(fi)?,
@@ -68,7 +70,6 @@ impl Multi {
                 let index = o as usize / MULTI_PART_SIZE;
                 let count = l as usize / MULTI_PART_SIZE;
 
-                // println!("new multi with number {} has {} part", result.multis.len()-1, count);
                 Some(MulSlice(index, count))
             } else {
                 None

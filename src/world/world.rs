@@ -1,5 +1,6 @@
 use std::collections::hash_map::Entry;
 use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
+use log::warn;
 use crate::*;
 use crate::http::server::Item;
 use crate::mapdata::LandBlock;
@@ -31,7 +32,7 @@ impl StaticWorld {
         let land = if land.is_ok() {
             land.unwrap()
         } else {
-            println!("error while read file {map_path}, try use {map_uop_path}");
+            warn!("error while read file {map_path}, try use {map_uop_path}");
             Land::read_uop(map_uop_path, width_blocks, height_blocks, world).unwrap()
         };
 

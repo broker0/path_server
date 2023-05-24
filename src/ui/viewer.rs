@@ -26,7 +26,6 @@ pub struct MulViewer {
 
 impl MulViewer {
     fn new(world_model: Arc<WorldModel>) -> Self {
-        println!("mulviewer created");
         Self {
             world_model,
             is_centered: true,

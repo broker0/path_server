@@ -3,6 +3,7 @@ use mul::mulreader::*;
 use std::fs::File;
 use std::io::Error;
 use std::io::BufReader;
+use log::trace;
 
 
 /// ColorData stores information about the colors of all tiles to display on the map.
@@ -31,6 +32,7 @@ const BLUE_SHIFT: usize = 0;
 impl ColorData {
     /// Tries to read data from a file
     pub fn read() -> Result<Self, Error> {
+        trace!("ColorData::read");
         let mut result = Self {
             colors: Vec::with_capacity(65536),
         };

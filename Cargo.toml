@@ -3,6 +3,9 @@ name = "path_server"
 version = "0.1.0"
 edition = "2021"
 
+[profile.release]
+strip = true
+
 [[bin]]
 name = "path_server"
 path = "src/main.rs"
@@ -15,9 +18,13 @@ crate-type = ["cdylib"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-doryen-rs = "1.2.0"
+doryen-rs = "1.2.3"
 image = "0.24.5"
-tokio= { version ="1", features = [ "full" ] }
-hyper= { version = "0.14.25", features = [ "http1", "tcp", "server", "runtime"] }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1"
+tokio= { version ="1.28.1", features = [ "full" ] }
+hyper= { version = "0.14.26", features = [ "http1", "tcp", "server", "runtime"] }
+serde = { version = "1.0.163", features = ["derive"] }
+serde_json = "1.0.96"
+log="0.4.17"
+simplelog = "0.12.1"
+clap = { version = "4.3.0", features = ["cargo"] }
+lazy_static = "1.4.0"

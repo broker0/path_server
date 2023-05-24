@@ -120,6 +120,8 @@ Default value is "Diagonal".
 
 Can be one of these string values: "Manhattan", "Chebyshev", "Diagonal", "Euclidean".
 
+`dx` = `abs`(`dest_x` - `curr_x`), `dy` = `abs`(`dest_y` - `curr_y`)
+
 If it's quite simply "Manhattan" considers the greater of `dx`, `dy` as a distance.
 
 "Euclidean" - the most common Euclidean distance is `sqrt`(`dx`*`dx`+`dy`*`dy`). In the world of Ultima, 

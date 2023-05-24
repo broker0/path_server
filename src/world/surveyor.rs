@@ -2,6 +2,7 @@ use std::cmp::{Ordering};
 use std::collections::{BinaryHeap, HashMap, HashSet, VecDeque};
 use std::collections::hash_map::{Entry};
 use std::time::Instant;
+use log::{debug, info, warn};
 
 use crate::http::server::{DistanceFunc, Point, TraceOptions};
 use crate::world::{DynamicWorld, TileShape, WorldTile};
@@ -334,7 +335,7 @@ impl<'a> WorldSurveyor<'a> {
 
             cnt += 1;
             if cnt % 100000 == 0 {
-                println!("{cnt} ({curr_x} {curr_y}) current score {curr_fval}, frontier len {}", frontier.len());
+                debug!("{cnt} ({curr_x} {curr_y}) current score {curr_fval}, frontier len {}", frontier.len());
             }
 
             // check if the current position has been visited before
@@ -361,7 +362,7 @@ impl<'a> WorldSurveyor<'a> {
             }
 
             if d_x <= x_accuracy && d_y <= y_accuracy && d_z <= z_accuracy {
-                println!("Found! {curr_x} {curr_y} {curr_gval} {curr_fval}");
+                info!("Found! {curr_x} {curr_y} {curr_gval} {curr_fval}");
                 break
             }
 
@@ -412,7 +413,7 @@ impl<'a> WorldSurveyor<'a> {
         }
 
         let duration = start_time.elapsed();
-        println!("Total tiles explored {cnt} and visited {} in {:?}", visited.len(), duration);
+        debug!("total tiles explored {cnt} and visited {} in {:?}", visited.len(), duration);
 
         if all_points {
             for (Position(x, y,z), w) in visited {
@@ -420,7 +421,7 @@ impl<'a> WorldSurveyor<'a> {
             }
         } else if let Some(mut curr_pos) = best_pos {
             cnt = 0;
-            println!("search path to start from {curr_pos:?} with score {best_dist}");
+            info!("search path to start from {curr_pos:?} with score {best_dist}");
             loop {
                 cnt += 1;
                 // println!("{cnt} - {curr_pos:?}");
@@ -428,14 +429,14 @@ impl<'a> WorldSurveyor<'a> {
                 points.push(Point{ x: prev_pos.0, y: prev_pos.1, z: prev_pos.2, w: 0, });
 
                 if prev_pos == start_pos {
-                    println!("found start, path len is {cnt} tiles!");
+                    info!("found start, path len is {cnt} tiles!");
                     break;
                 }
                 curr_pos = prev_pos;
             }
             points.reverse();
         } else {
-            println!("there is no data to return after tracing completes")
+            warn!("there is no data to return after tracing completes")
         }
     }
 }

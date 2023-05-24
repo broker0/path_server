@@ -4,6 +4,7 @@ use std::fs::File;
 use std::io::{Error, Seek};
 use std::io::BufReader;
 use std::mem;
+use log::trace;
 
 /*
     mul file raw structures, full set of fields
@@ -139,6 +140,7 @@ pub struct TileData {
 
 impl TileData {
     pub fn read() -> Result<Self, Error> {
+        trace!("TileData::read");
         let mut result = TileData {
             land_tiles: Vec::with_capacity(16384),
             static_tiles: Vec::with_capacity(16384),
@@ -150,8 +152,6 @@ impl TileData {
 
         let is7090 = file_len == 3_188_736;
         let is7000 = file_len == 1_644_544;
-
-        println!("{is7000} {is7090}");
 
         // the first half of the file (roughly) contains information about MulLandTile
         // 512 block of tile blocks

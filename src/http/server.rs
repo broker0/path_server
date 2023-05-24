@@ -14,6 +14,7 @@ use hyper::service::{make_service_fn, service_fn};
 use serde::{Deserialize, Serialize};
 
 use image::{ImageBuffer, Rgb};
+use log::{error, info};
 
 use crate::world::{WorldModel, WorldSurveyor};
 
@@ -147,7 +148,7 @@ impl ApiHandler {
         let body_bytes = hyper::body::to_bytes(req.into_body()).await.map_err(|err|{
             let response = ApiResponse::Error {err: format!("Failed to read request body: {}", err) };
             let response_body = serde_json::to_string(&response).unwrap();
-            println!("Api::error body parsing - {err}");
+            error!("Api::error body parsing - {err}");
 
             Ok::<Response<Body>, Infallible>(Response::builder()
                 .header("Content-Type", "application/json")
@@ -187,7 +188,7 @@ impl ApiHandler {
 
             // parsing failed, make a response that will include a description of the error
             Err(err) => {
-                println!("Api::error request parsing - {err}");
+                error!("Api::error request parsing - {err}");
 
                 ApiResponse::Error {err: format!("Failed to parse request body: {err}") }
             }
@@ -228,31 +229,29 @@ impl ApiHandler {
     }
 
     // Handlers
-
-    // TODO change prints to custom logging
     async fn handle_world_save(&self, file_name: &String) -> ApiResponse {
-        println!("Api::world_save to {file_name}");
+        info!("Api::world_save to {file_name}");
         self.world_model.save_state(file_name);
         ApiResponse::Success {}
     }
 
 
     async fn handle_world_load(&self, file_name: &String) -> ApiResponse {
-        println!("Api::world_load from {file_name}");
+        info!("Api::world_load from {file_name}");
         self.world_model.load_state(file_name);
         ApiResponse::Success {}
     }
 
 
     fn handle_world_clear(&self) -> ApiResponse {
-        println!("Api::world_clear");
+        info!("Api::world_clear");
         self.world_model.clear_state();
         ApiResponse::Success {}
     }
 
 
     fn handle_items_del(&self, serials: &Vec<u32>) -> ApiResponse {
-        println!("Api::item_del {} items", serials.len());
+        info!("Api::item_del {} items", serials.len());
         for serial in serials {
             self.world_model.delete_item(*serial);
         }
@@ -261,7 +260,7 @@ impl ApiHandler {
 
 
     fn handle_items_add(&self, items: &Vec<Item>) -> ApiResponse {
-        println!("Api::item_add {} items", items.len());
+        info!("Api::item_add {} items", items.len());
 
         let start = SystemTime::now();
         let since_epoch = start.duration_since(UNIX_EPOCH).expect("Failed to get current time");
@@ -276,7 +275,7 @@ impl ApiHandler {
 
     #[allow(dead_code)]
     fn handle_query(&self, world: u8, left: isize, top: isize, right: isize, bottom: isize) -> ApiResponse {
-        println!("Api::query world: {world}, area: {left}, {top} - {right}, {bottom}");
+        info!("Api::query world: {world}, area: {left}, {top} - {right}, {bottom}");
         let mut items = Vec::new();
         self.world_model.query(world, left, top, right, bottom, &mut items);
 
@@ -286,7 +285,7 @@ impl ApiHandler {
 
     #[allow(dead_code)]
     async fn handle_trace_path(&self, world: u8, sx: isize, sy: isize, sz: i8, dx: isize, dy: isize, dz: i8, options: &TraceOptions) -> ApiResponse {
-        println!("Api::trace_path world {world}, from {sx}, {sy}, {sz} -> to {dx}, {dy}, {dz}");
+        info!("Api::trace_path world {world}, from {sx}, {sy}, {sz} -> to {dx}, {dy}, {dz}");
         let model = self.world_model.clone();
 
         let options = options.clone();
@@ -331,7 +330,7 @@ impl ApiHandler {
         let top = top.unwrap_or(bound_top);
         let right = right.unwrap_or(bound_right);
         let bottom = bottom.unwrap_or(bound_bottom);
-        println!("Api::render_area world {world}, area: {left}, {top} - {right}, {bottom}");
+        info!("Api::render_area world {world}, area: {left}, {top} - {right}, {bottom}");
 
         // if no color is passed to the function, use the default value -1, this value is treated as a special case
         let color = color.unwrap_or(-1);
@@ -343,7 +342,7 @@ impl ApiHandler {
         let width = right-left;
         let height = bottom-top;
 
-        println!("Render area: {left},{top}  -  {right},{bottom}");
+        info!("Render area: {left},{top}  -  {right},{bottom}");
 
         let mut tiles = Vec::new();
         let mut image = ImageBuffer::new(width as u32, height as u32);
@@ -429,11 +428,11 @@ async fn http_svc(model: Arc<WorldModel>, http_stop: Receiver<()>) {
             http_stop.await.ok();
         });
 
-    println!("Listening on http://{}", addr);
+    info!("Listening on http://{}", addr);
     if let Err(e) = server.await {
-        eprintln!("server error: {}", e);
+        error!("server error: {}", e);
     } else {
-        eprintln!("server stopped successfully")
+        error!("server stopped successfully")
     }
 }
 
