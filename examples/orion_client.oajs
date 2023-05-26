@@ -28,7 +28,7 @@ function item_saver() {
           };
 
           if (obj.IsMulti()) {
-            item.graphic |= 0x4000;
+            item.graphic |= 0x10000;
             Orion.Print("Found house");
           }
 
