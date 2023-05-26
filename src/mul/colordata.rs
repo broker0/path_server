@@ -38,10 +38,12 @@ impl ColorData {
         };
 
         let f = File::open("Radarcol.mul")?;
+        let file_len = f.metadata()?.len();
         let mut f = BufReader::new(f);
         let f = &mut f;
 
-        for _ in 0..65536 {
+
+        for _ in 0..file_len/2 {
             let color = mul_read_u16(f)?;   // 5/5/5 RGB packed to u16
             result.colors.push(Self::get_rgb(color));
         }
@@ -57,7 +59,7 @@ impl ColorData {
 
     /// returns color for static tile in rgba8 format, tile must me less that 49151
     pub fn get_static_color(&self, tile: u16) -> (u8, u8, u8, u8) {
-        debug_assert!(tile <= 65535 - 16384, "tile number too large");
+        // debug_assert!(tile <= 65535 - 16384, "tile number too large");
         let (r,g,b) = self.colors[tile as usize + 16384];
         (r, g, b, 255)
     }
