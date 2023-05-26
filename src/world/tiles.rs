@@ -12,7 +12,7 @@ pub enum DynamicWorldObject {
         x: isize,
         y: isize,
         z: i8,
-        tile: u16,
+        tile: u32,
         parent: u32,
         counter: u16,
     },
@@ -22,7 +22,7 @@ pub enum DynamicWorldObject {
         y: isize,
         z: i8,
         serial: u32,
-        graphic: u16,
+        graphic: u32,
     }
 }
 
@@ -32,7 +32,7 @@ impl DynamicWorldObject {
         // MultiPart is less than GameObject
         DynamicWorldObject::MultiPart {
             x, y, z: i8::MIN,
-            tile: u16::MIN,
+            tile: u32::MIN,
             parent: u32::MIN,
             counter: u16::MIN,
         }
@@ -44,7 +44,7 @@ impl DynamicWorldObject {
         DynamicWorldObject::GameObject {
             x, y, z: i8::MAX,
             serial: u32::MAX,
-            graphic: u16::MAX,
+            graphic: u32::MAX,
         }
     }
 }
@@ -245,7 +245,7 @@ pub struct TopLevelItem {
     pub y: isize,
     pub z: i8,
     pub serial: u32,
-    pub graphic: u16,
+    pub graphic: u32,
     #[serde(default)]
     pub timestamp: u64,
 }

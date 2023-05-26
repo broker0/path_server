@@ -231,8 +231,8 @@ impl DynamicWorld {
         };
 
         // TODO batch adding of parts of multi-objects
-        assert_ne!(graphic & 0x4000, 0);
-        let multi_id = graphic & 0x3FFF;
+        assert_ne!(graphic & 0x10000, 0);
+        let multi_id = (graphic & 0xFFFF) as u16;
         let multi_parts = multi.multi_parts(multi_id);
         for (counter, part) in multi_parts.iter().enumerate() {
             let x = x + part.x as isize;
@@ -241,7 +241,7 @@ impl DynamicWorld {
 
             // each part of a multi-object is a unique item
             self.overlay_insert_item(DynamicWorldObject::MultiPart { x, y, z,
-                tile: part.static_tile,
+                tile: part.static_tile as u32,
                 parent: serial,
                 counter: counter as u16,
             });
@@ -256,8 +256,8 @@ impl DynamicWorld {
         };
 
         // TODO batch deleting of parts of multi-objects
-        assert_ne!(graphic & 0x4000, 0);
-        let multi_id = graphic & 0x3FFF;
+        assert_ne!(graphic & 0x10000, 0);
+        let multi_id = (graphic & 0xFFFF) as u16;
         let multi_parts = multi.multi_parts(multi_id);
         for (counter, part) in multi_parts.iter().enumerate() {
             let x = x + part.x as isize;
@@ -265,31 +265,31 @@ impl DynamicWorld {
             let z = z + part.z as i8;
 
             self.overlay_delete_item(&DynamicWorldObject::MultiPart { x, y, z,
-                tile: part.static_tile,
+                tile: part.static_tile as u32,
                 parent: *serial,
                 counter: counter as u16,
             });
         }
     }
 
-    pub fn insert_item(&self, x: isize, y: isize, z: i8, serial: u32, graphic: u16) {
+    pub fn insert_item(&self, x: isize, y: isize, z: i8, serial: u32, graphic: u32) {
         let item = DynamicWorldObject::GameObject { x, y, z, serial, graphic, };
 
-        if graphic & 0x4000 != 0 {  // multi-object
+        if graphic & 0x10000 != 0 {  // multi-object
             self.insert_multi_parts(item); // add parts of multi-object
             // add the multi-object itself to the world, but with modified graphics NO_USE
-            self.overlay_insert_item(DynamicWorldObject::GameObject { x, y, z, serial, graphic: 0x0000,}); // NO_USE graphic for real multi-object
+            self.overlay_insert_item(DynamicWorldObject::GameObject { x, y, z, serial, graphic });
         } else {
             self.overlay_insert_item(item);
         }
     }
 
-    pub fn delete_item(&self, x: isize, y: isize, z: i8, serial: u32, graphic: u16) {
+    pub fn delete_item(&self, x: isize, y: isize, z: i8, serial: u32, graphic: u32) {
         let item = DynamicWorldObject::GameObject { x, y, z, serial, graphic, };
 
-        if graphic & 0x4000 != 0 {
+        if graphic & 0x10000 != 0 {
             self.delete_multi_parts(&item);
-            self.overlay_delete_item(&DynamicWorldObject::GameObject { x, y, z, serial, graphic: 0x0000, });
+            self.overlay_delete_item(&DynamicWorldObject::GameObject { x, y, z, serial, graphic });
         } else {
             self.overlay_delete_item(&item);
         }
@@ -368,9 +368,12 @@ impl DynamicWorld {
                 match item {
                     DynamicWorldObject::MultiPart { tile, z, .. } |
                     DynamicWorldObject::GameObject { graphic: tile, z, .. } => {
+                        if tile & 0x10000 != 0 {
+                            continue    // skip multi-objects
+                        }
                         let obj = WorldTile {
-                            tile: TileType::ObjectTile(*tile),
-                            shape: TileShape::from_static_tile(*z, tiledata.get_static_tile(*tile)),
+                            tile: TileType::ObjectTile(*tile as u16),
+                            shape: TileShape::from_static_tile(*z, tiledata.get_static_tile(*tile as u16)),
                         };
                         result.push(obj);
                     }
@@ -397,10 +400,10 @@ impl DynamicWorld {
                     DynamicWorldObject::GameObject { z, graphic: tile, .. } => (z, tile),
                 };
 
-                let static_tile = tiledata.get_static_tile(*tile);
+                let static_tile = tiledata.get_static_tile(*tile as u16);
 
                 Some( WorldTile {
-                    tile: TileType::ObjectTile(*tile),
+                    tile: TileType::ObjectTile(*tile as u16),
                     shape: TileShape::from_static_tile(*z, static_tile),
                 })
 

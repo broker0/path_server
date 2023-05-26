@@ -45,6 +45,7 @@ pub struct WorldModel {
         world 5: 160x512
      */
     world0: DynamicWorld,
+    world1: DynamicWorld,
     world2: DynamicWorld,
 
     // TODO replace HashMap with HashSet by hashing TopLevelItem only over the serial field
@@ -56,6 +57,7 @@ impl WorldModel {
         WorldModel {
             data: data.clone(),
             world0: DynamicWorld::new(data.clone(), 0, 768, 512),
+            world1: DynamicWorld::new(data.clone(), 1, 768, 512),
             world2: DynamicWorld::new(data.clone(),2, 288, 200),
 
             items_index: RwLock::new(HashMap::new()),
@@ -66,6 +68,7 @@ impl WorldModel {
     pub fn world(&self, n: u8) -> &DynamicWorld {
         match n {
             0 => &self.world0,
+            1 => &self.world1,
             2 => &self.world2,
             _ => unreachable!(),
         }
@@ -126,7 +129,7 @@ impl WorldModel {
     }
 
 
-    pub fn insert_item(&self, world: u8, x: isize, y: isize, z: i8, serial: u32, graphic: u16, last_updated: u64) {
+    pub fn insert_item(&self, world: u8, x: isize, y: isize, z: i8, serial: u32, graphic: u32, last_updated: u64) {
         let mut index = self.items_index.write().unwrap();
         let world_model = self.world(world);
 

@@ -84,7 +84,7 @@ impl TraceOptions {
 pub struct Item {
     pub world: u8,
     pub serial: u32,
-    pub graphic: u16,
+    pub graphic: u32,
     pub x: isize,
     pub y: isize,
     pub z: i8,

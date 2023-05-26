@@ -344,10 +344,9 @@ impl Engine for MulViewer {
         }
 
         if input.key_pressed("Tab") {
-            if self.current_world == 0 {
-                self.current_world = 2
-            } else {
-                self.current_world = 0
+            self.current_world += 1;
+            if self.current_world > 2 {
+                self.current_world = 0;
             }
         }
 

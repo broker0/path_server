@@ -204,7 +204,7 @@ Offset `next_block_offset` is where `UopEntryHeader` and `entry_count` elements 
 
 The map data is divided into `UopHeader.entry_count` blocks, each of which is described by the `UopEntry` structure.
 
-The data is at offset `UopEntry.data_offset` + `UopEntry.header_length`, and has a size in bytes `UopEntry.compressed_length`-`UopEntry.header_length`.
+The data is at offset `UopEntry.data_offset` + `UopEntry.header_length`, and has a size in bytes `UopEntry.compressed_length`.
 
 Inside this data, `MapBlock` structures lie continuously, their number can be determined by dividing the data size by the `MapBlock` size, it must be divided without a remainder.
 
