@@ -19,8 +19,12 @@ jobs:
         with:
           use-cross: true
           command: build
-          args: --target x86_64-pc-windows-gnu --release
+          args: --target x86_64-pc-windows-gnu --release --bin path_server
+      - uses: vimtor/action-zip@v1
+        with:
+          files target/release/path_server.exe
+          dest: release.zip
       - uses: actions/upload-artifact@v3
         with:
           name: Release
-          path: target/release/path_server.exe
+          path: release.zip
