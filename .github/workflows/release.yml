@@ -28,23 +28,13 @@ jobs:
         with:
           files: target/x86_64-pc-windows-gnu/release/path_server_lib.dll www/ui.html
           dest: path_server_lib.zip
-      
-      - name: Create Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}      
-        id: create_release
-        uses: actions/create-release@v1
+
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v1
         with:
+          files: |
+            ./path_server.zip
+            ./path_server_lib.zip
+
           tag_name: ${{ github.ref }}
-          release_name: path_server ${{ github.ref }}
-          draft: false
-          prerelease: false
-        
-      - uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}      
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}        
-          asset_path: ./path_server.zip
-          asset_name: path_server.zip
-          asset_content_type: application/zip
+          token: ${{ secrets.GITHUB_TOKEN }}
