@@ -11,15 +11,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - name: Setting up toolchain
-        run: rustup target add "x86_64-pc-windows-gnu"
-      - name: Build binary
-        run: cargo build --target "x86_64-pc-windows-gnu" --release --verbose --bin path_server
-      - name: Build library
-        run: cargo build --release --verbose --lib
-      - uses: rust-build/rust-build.action@v1.4.3
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}      
-        with:
-          name: release
-          path: target/release/path_server.exe
+      - uses: actions-rs/toolchain@v1
+      - with:
+          toolchain: stable
+          target: x86_64-pc-windows-gnu
+      - uses: acitions-rs/cargo@v1
+      - with:
+          use-cross: true
+          command: build
+          args: --target x86_64-pc-windows-gnu
