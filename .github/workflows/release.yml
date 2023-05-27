@@ -32,9 +32,8 @@ jobs:
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: ${{ github.ref.replace('refs/tags/', '') }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           files: |
             ./path_server.zip
             ./path_server_lib.zip
-
-          tag_name: ${{ github.ref }}
-          token: ${{ secrets.GITHUB_TOKEN }}
