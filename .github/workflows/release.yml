@@ -19,15 +19,21 @@ jobs:
         with:
           use-cross: true
           command: build
-          args: --target x86_64-pc-windows-gnu --release --bin path_server
+          args: --target x86_64-pc-windows-gnu --release --bins --lib
       - name: Show dirs
         run: |
           ls -laR
       - uses: vimtor/action-zip@v1
         with:
-          files: ${GITHUB_WORKSPACE}/target/release/path_server.exe
-          dest: release.zip
+          files: target/x86_64-pc-windows-gnu/release/path_server.exe www/
+          dest: path_server.zip
+      - uses: vimtor/action-zip@v1
+        with:
+          files: target/x86_64-pc-windows-gnu/release/path_server_lib_dll.exe www/ui.html
+          dest: path_server.zip
       - uses: actions/upload-artifact@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}      
         with:
           name: Release
-          path: release.zip
+          path: path_server.zip
