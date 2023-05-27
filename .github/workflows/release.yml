@@ -2,9 +2,10 @@
 name: Release
 
 on:
-  push:
-    tags: [ '[0-9]+.[0-9]+' ]
-
+  release:
+    types: [created]
+    
+    
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -15,26 +16,41 @@ jobs:
         uses: bruceadams/get-release@v1.3.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
       - uses: actions/checkout@v3
+      
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           target: x86_64-pc-windows-gnu
+      
       - uses: actions-rs/cargo@v1
         with:
           use-cross: true
           command: build
           args: --target x86_64-pc-windows-gnu --release --bins --lib
+      
       - uses: vimtor/action-zip@v1
         with:
           files: target/x86_64-pc-windows-gnu/release/path_server.exe www/
           dest: path_server.zip
+      
       - uses: vimtor/action-zip@v1
         with:
           files: target/x86_64-pc-windows-gnu/release/path_server_lib.dll www/ui.html
           dest: path_server_lib.zip
 
-      - name: Upload Release Asset
+      - name: Upload Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}        
+        with:
+          upload_url: ${{ steps.get_release.outputs.upload_url }}
+          asset_path: ./path_server.zip
+          asset_name: path_server.zip
+          asset_content_type: application/zip
+          
+      - name: Upload Release Lib
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}        
@@ -43,3 +59,5 @@ jobs:
           asset_path: ./path_server_lib.zip
           asset_name: path_server_lib.zip
           asset_content_type: application/zip
+
+
