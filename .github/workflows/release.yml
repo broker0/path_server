@@ -12,11 +12,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
-      - with:
+        with:
           toolchain: stable
           target: x86_64-pc-windows-gnu
       - uses: acitions-rs/cargo@v1
-      - with:
+        with:
           use-cross: true
           command: build
           args: --target x86_64-pc-windows-gnu
