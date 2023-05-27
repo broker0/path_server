@@ -19,4 +19,8 @@ jobs:
         with:
           use-cross: true
           command: build
-          args: --target x86_64-pc-windows-gnu
+          args: --target x86_64-pc-windows-gnu --release
+      - uses: actions/upload-artifact@v3
+        with:
+          name: Release
+          path: target/release/path_server.exe
