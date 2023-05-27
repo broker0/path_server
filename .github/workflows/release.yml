@@ -20,6 +20,9 @@ jobs:
           use-cross: true
           command: build
           args: --target x86_64-pc-windows-gnu --release --bin path_server
+      - name: Show dirs
+        run: |
+          ls -laR
       - uses: vimtor/action-zip@v1
         with:
           files: ${GITHUB_WORKSPACE}/target/release/path_server.exe
