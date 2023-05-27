@@ -30,6 +30,8 @@ jobs:
           dest: path_server_lib.zip
       
       - name: Create Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}      
         id: create_release
         uses: actions/create-release@v1
         with:
