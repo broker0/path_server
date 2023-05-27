@@ -7,18 +7,19 @@ on:
 
 jobs:
   release:
-    name: release ${{ matrix.target }}
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        target: [x86_64-pc-windows-gnu, x86_64-apple-darwin ]
+
     steps:
-      - uses: actions/checkout@master
-      - name: Compile and release
-        uses: rust-build/rust-build.action@v1.4.3
+      - uses: actions/checkout@v3
+      - name: Setting up toolchain
+        run: rustup target add "x86_64-pc-windows-gnu"
+      - name: Build binary
+        run: cargo build --target "x86_64-pc-windows-gnu" --release --verbose --bin path_server
+      - name: Build library
+        run: cargo build --release --verbose --lib
+      - uses: rust-build/rust-build.action@v1.4.3
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}      
         with:
-          RUSTTARGET: ${{ matrix.target }}
-          EXTRA_FILES: "README.md www/terminal_8x8.png www/ui.html"
+          name: release
+          path: target/release/path_server.exe
