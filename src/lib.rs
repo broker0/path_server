@@ -4,6 +4,9 @@ use std::sync::Arc;
 use std::cell::{RefCell};
 use std::thread::JoinHandle;
 use tokio::sync::oneshot::Sender;
+use lazy_static::lazy_static;
+use std::sync::Mutex;
+use log::{debug, info, warn};
 
 use crate::world::{WorldModel, WorldTile};
 
@@ -21,42 +24,47 @@ struct ServerControl {
 }
 
 
-thread_local! {
-    static SERVER_CONTROL: RefCell<Option<ServerControl>> = RefCell::new(None);
+lazy_static! {
+    static ref SERVER_CONTROL: Mutex<Option<ServerControl>> = Mutex::new(None);
 }
 
 
 #[no_mangle]
 pub extern "C" fn start_path_server() -> bool {
-    println!("start path server");
-    SERVER_CONTROL.with(|control| {
-        match control.borrow().as_ref() {
-            Some(_) => return false,
-            None => {}
+    info!("try start path server");
+    {
+        let mut control = SERVER_CONTROL.lock().unwrap();
+        if control.is_some() {
+            warn!("path_server already started");
+            return false;
         }
 
-        control.replace(run_service());
-
-        true
-    })
+        *control = run_service();
+        debug!("path_server started");
+    }
+    true
 }
 
 
 #[no_mangle]
 pub extern "C" fn stop_path_server() -> bool {
-    println!("stop path server");
-    SERVER_CONTROL.with(|control| {
-        let control = control.replace(None);
-        match control {
-            None => return false,
+    info!("try stop path server");
+    {
+        let mut control = SERVER_CONTROL.lock().unwrap();
+        match control.take() {
+            None => {
+                warn!("path_server already stopped");
+                return false
+            },
+
             Some(control) => {
                 control.stop_signal.send(()).unwrap();
                 control.handle.join().unwrap();
+                debug!("path_server stopped");
             }
         }
-
-        true
-    })
+    }
+    true
 }
 
 
