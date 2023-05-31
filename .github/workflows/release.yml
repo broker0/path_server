@@ -29,15 +29,21 @@ jobs:
           use-cross: true
           command: build
           args: --target x86_64-pc-windows-gnu --release --bins --lib
+      - name: Copy files
+        run: |
+          cp target/x86_64-pc-windows-gnu/release/path_server.exe .
+          cp target/x86_64-pc-windows-gnu/release/path_server_lib.dll .
       
       - uses: vimtor/action-zip@v1
         with:
-          files: target/x86_64-pc-windows-gnu/release/path_server.exe www/
+          files: path_server.exe www/
+          recursive: false
           dest: path_server.zip
       
       - uses: vimtor/action-zip@v1
         with:
-          files: target/x86_64-pc-windows-gnu/release/path_server_lib.dll www/ui.html
+          files: path_server_lib.dll www/ui.html
+          recursive: false
           dest: path_server_lib.zip
 
       - name: Upload Release
