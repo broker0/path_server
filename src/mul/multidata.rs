@@ -62,20 +62,9 @@ impl Multi {
         // calculate count of index records and MultTile in files
         let multi_idx_count = fi_size as usize / LOOKUP_IDX_RECORD_SIZE;
 
-        let (is7090, part_size) = if f_size % MULTI_PART_SIZE == 0 && f_size % MULTI_PART7090_SIZE != 0 {
-            (false, MULTI_PART_SIZE)
-        } else if f_size % MULTI_PART_SIZE != 0 && f_size % MULTI_PART7090_SIZE == 0 {
-            (true, MULTI_PART7090_SIZE)
-        } else {
-            panic!("unable to determine version of multi.mul");
-        };
-
-        let multi_tiles_count = f_size as usize / part_size;
-
-        let mut result = Self{
-            multis: Vec::with_capacity(multi_idx_count),
-            parts: Vec::with_capacity(multi_tiles_count),
-        };
+        let mut raw_idx = Vec::new();
+        let mut pre7090 = true;
+        let mut is7090 = true;
 
         for i in 0..multi_idx_count {
             let idx = MulLookupIndexRecord {
@@ -83,10 +72,27 @@ impl Multi {
                 length: mul_read_u32(fi)?,
                 unknown1: mul_read_u32(fi)?,
             };
+            raw_idx.push((idx.offset, idx.length));
+            if idx.offset != 0xFFFF_FFFF {
+                pre7090 &= (idx.length as usize % MULTI_PART_SIZE) == 0;
+                is7090 &= (idx.length as usize % MULTI_PART7090_SIZE) == 0;
+                println!("{} {}", (idx.length as usize % MULTI_PART_SIZE), (idx.length as usize % MULTI_PART7090_SIZE));
+            }
 
-            let o = idx.offset;
-            let l = idx.length;
+        }
 
+        if pre7090 && is7090 || (!pre7090 && !is7090){
+            panic!("unable to determine version of multi.mul");
+        }
+
+        let part_size = if is7090 { MULTI_PART7090_SIZE } else { MULTI_PART_SIZE };
+        let multi_tiles_count = f_size as usize / part_size;
+        let mut result = Self {
+            multis: Vec::with_capacity(multi_idx_count),
+            parts: Vec::with_capacity(multi_tiles_count),
+        };
+
+        for (o, l) in raw_idx {
             let value = if o != 0xFFFF_FFFF {
                 // convert file offset and length in bytes to index and count
                 let index = o as usize / part_size;
