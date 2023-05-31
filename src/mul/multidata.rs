@@ -72,13 +72,13 @@ impl Multi {
                 length: mul_read_u32(fi)?,
                 unknown1: mul_read_u32(fi)?,
             };
+
             raw_idx.push((idx.offset, idx.length));
+
             if idx.offset != 0xFFFF_FFFF {
                 pre7090 &= (idx.length as usize % MULTI_PART_SIZE) == 0;
                 is7090 &= (idx.length as usize % MULTI_PART7090_SIZE) == 0;
-                println!("{} {}", (idx.length as usize % MULTI_PART_SIZE), (idx.length as usize % MULTI_PART7090_SIZE));
             }
-
         }
 
         if pre7090 && is7090 || (!pre7090 && !is7090){
@@ -91,6 +91,8 @@ impl Multi {
             multis: Vec::with_capacity(multi_idx_count),
             parts: Vec::with_capacity(multi_tiles_count),
         };
+
+        debug!("entry size of multi.mul is {part_size} bytes, total entries {part_size}, is7090={is7090}");
 
         for (o, l) in raw_idx {
             let value = if o != 0xFFFF_FFFF {
@@ -133,7 +135,7 @@ impl Multi {
     pub fn multi_parts(&self, multi_id: u16) -> &[MultiPart] {
         match self.multis[multi_id as usize] {
             None => &[],
-            Some(MulSlice(index, count)) => &self.parts[index..(index +count)]
+            Some(MulSlice(index, count)) => &self.parts[index..(index+count)]
         }
     }
 }
