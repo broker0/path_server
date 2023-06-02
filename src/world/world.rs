@@ -4,7 +4,6 @@ use log::warn;
 use crate::*;
 use crate::http::server::Item;
 use crate::mapdata::LandBlock;
-use crate::mul::tiledata;
 use crate::staticdata::StaticTile;
 use crate::world::tiles::DynamicWorldObject;
 use crate::world::{TileShape, TileType};

@@ -2,8 +2,8 @@ use std;
 use std::collections::{BTreeSet, HashMap};
 use std::fs::File;
 use std::sync::Arc;
-use std::time::{Duration, Instant};
-use log::{trace, debug, info, warn, error, LevelFilter};
+use std::time::{Instant};
+use log::{info, LevelFilter};
 
 use crate::world::{WorldModel, WorldTile};
 
@@ -23,7 +23,6 @@ mod world;
 
 
 fn run_service() {
-
     let start = Instant::now();
 
     info!("loading data from files, creating the world...");
@@ -48,7 +47,7 @@ fn run_service() {
     info!("app stopped");
     http_stop_tx.send(()).unwrap();
     handle.join().unwrap();
-    std::thread::sleep(Duration::from_secs(5));
+    info!("server stopped");
 }
 
 

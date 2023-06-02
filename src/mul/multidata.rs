@@ -1,7 +1,7 @@
 use crate::{mul, MulSlice};
 use mul::mulreader::*;
 use std::fs::File;
-use std::io::{Error, Read};
+use std::io::{Error};
 use std::io::BufReader;
 use std::mem;
 use log::{debug, trace};

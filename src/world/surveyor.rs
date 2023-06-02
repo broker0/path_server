@@ -1,5 +1,5 @@
 use std::cmp::{Ordering};
-use std::collections::{BinaryHeap, HashMap, HashSet, VecDeque};
+use std::collections::{BinaryHeap, HashMap};
 use std::collections::hash_map::{Entry};
 use std::time::Instant;
 use log::{debug, info, warn};
