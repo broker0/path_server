@@ -17,7 +17,7 @@ function item_saver() {
         }
         if (obj && obj.Graphic() !== 0 && obj.X() !== 0 && obj.Y() !== 0) {
           var item = {
-            world: 0,
+            world: Player.Map(),
             serial: Number(obj.Serial()),
             x: obj.X(),
             y: obj.Y(),
