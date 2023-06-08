@@ -424,7 +424,6 @@ impl<'a> WorldSurveyor<'a> {
             info!("search path to start from {curr_pos:?} with score {best_dist}");
             loop {
                 cnt += 1;
-                // println!("{cnt} - {curr_pos:?}");
                 let prev_pos = back_path[&curr_pos];
                 points.push(Point{ x: prev_pos.0, y: prev_pos.1, z: prev_pos.2, w: 0, });
 

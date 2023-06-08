@@ -1,4 +1,5 @@
 use std::collections::hash_map::Entry;
+use std::fs;
 use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 use log::warn;
 use crate::*;
@@ -40,6 +41,18 @@ impl StaticWorld {
             height_blocks,
             land,
             statics: Static::read(static_idx_path, static_data_path, width_blocks, height_blocks).unwrap(),
+        }
+    }
+
+    pub fn probe(world: u8) -> bool {
+        match fs::metadata(format!("map{world}.mul")) {
+            Ok(_) => true,
+            Err(_) => {
+                match fs::metadata(format!("map{world}LegacyMUL.uop")) {
+                    Ok(_) => true,
+                    Err(_) => false,
+                }
+            }
         }
     }
 

@@ -10,7 +10,7 @@ use crate::http::server::Item;
 use crate::mul::colordata::ColorData;
 use crate::mul::{Multi, TileData};
 use crate::world::tiles::TopLevelItem;
-
+use crate::world::world::StaticWorld;
 
 
 /// Stores data that is not a map or static
@@ -44,9 +44,13 @@ pub struct WorldModel {
         world 4: 181x181
         world 5: 160x512
      */
-    world0: DynamicWorld,
-    world1: DynamicWorld,
-    world2: DynamicWorld,
+    // world0: DynamicWorld,
+    // world1: DynamicWorld,
+    // world2: DynamicWorld,
+    // world3: DynamicWorld,
+    // world4: DynamicWorld,
+    // world5: DynamicWorld,
+    worlds: HashMap<u8, DynamicWorld>,
 
     // TODO replace HashMap with HashSet by hashing TopLevelItem only over the serial field
     pub items_index: RwLock<HashMap<u32, TopLevelItem>>,
@@ -54,23 +58,30 @@ pub struct WorldModel {
 
 impl WorldModel {
     pub fn new(data: Arc<WorldData>) -> Self {
-        WorldModel {
+        let mut result = WorldModel {
             data: data.clone(),
-            world0: DynamicWorld::new(data.clone(), 0, 768, 512),
-            world1: DynamicWorld::new(data.clone(), 1, 768, 512),
-            world2: DynamicWorld::new(data.clone(),2, 288, 200),
+            worlds: HashMap::new(),
 
             items_index: RwLock::new(HashMap::new()),
+        };
+
+        for (world, w,h) in [(0, 768, 512), (1, 768, 512), (2, 288, 200), (3, 320, 256), (4, 181, 181), (5, 160, 512)] {
+            let probe = StaticWorld::probe(world);
+            if probe {
+                result.worlds.insert(world, DynamicWorld::new(data.clone(), world, w, h));
+                debug!("world {world} is loaded");
+            }
         }
+
+        result
     }
 
 
     pub fn world(&self, n: u8) -> &DynamicWorld {
-        match n {
-            0 => &self.world0,
-            1 => &self.world1,
-            2 => &self.world2,
-            _ => unreachable!(),
+        let world = self.worlds.get(&n);
+        match world {
+            Some(world) => world,
+            None => unreachable!(),
         }
     }
 
