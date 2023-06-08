@@ -92,7 +92,7 @@ impl Multi {
             parts: Vec::with_capacity(multi_tiles_count),
         };
 
-        debug!("entry size of multi.mul is {part_size} bytes, total entries {part_size}, is7090={is7090}");
+        debug!("entry size of multi.mul is {part_size} bytes, total entries {multi_tiles_count}, is7090={is7090}");
 
         for (o, l) in raw_idx {
             let value = if o != 0xFFFF_FFFF {
