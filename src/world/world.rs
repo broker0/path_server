@@ -44,13 +44,13 @@ impl StaticWorld {
         }
     }
 
-    pub fn probe(world: u8) -> bool {
+    pub fn probe(world: u8, width: usize, height: usize) -> Option<(usize, usize)> {
         match fs::metadata(format!("map{world}.mul")) {
-            Ok(_) => true,
+            Ok(_) => Some((width, height)),
             Err(_) => {
                 match fs::metadata(format!("map{world}LegacyMUL.uop")) {
-                    Ok(_) => true,
-                    Err(_) => false,
+                    Ok(_) => Some((width, height)),
+                    Err(_) => None,
                 }
             }
         }

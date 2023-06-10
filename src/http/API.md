@@ -32,15 +32,46 @@ Completely clears the world of dynamic items
 
 ## Items management
 ### Add items
-{"ItemsAdd": {"items": [{"world": u8, serial": u32, "x": isize, "y": isize, "z": i8, "graphic": u16}, ...]}}
+{"ItemsAdd": {"items": [{"world": u8, serial": u32, "x": isize, "y": isize, "z": i8, "graphic": u32}, ...]}}
 ->
 {"Success": {}}
 
 Adds an items with the specified parameters to the world. 
+If the item is standard multi-object, then `graphic` must have the flag 0x10000.
 If an item with that `serial` already exists, then the old copy will be deleted.
 Only one item with a unique `serial` can exist in the world.
 
 if the object is a multi-object, then its parts are added to the world.
+
+
+### Custom Houses
+{"MultiItemsAdd": 
+    [
+        {"world": u8, 
+         "serial": u32, 
+         "x": isize, 
+         "y": isize, 
+         "z": u8, 
+         "graphic": u32, 
+         "parts": [
+            {"x": isize, 
+             "y": isize, 
+             "z": i8, 
+             "graphic": u16"
+            },
+            ...
+         ]
+        },
+        ...
+    ]
+}
+->
+{"Success": {}}
+
+Adds custom houses to the world. Field `graphic` must have flag 0x20000.
+Works like `ItemsAdd`, but all parts of the house will be sended and added, not only main object.
+Essentially, the source of the parts of the multi-object will be the data from the request, not the data loaded from the multi.mul.
+Deleting a multi-object with `ItemsDel`.
 
 
 ### Delete item
@@ -51,6 +82,7 @@ if the object is a multi-object, then its parts are added to the world.
 Removes the item with the specified `serials` from the world.
 
 if the object is multi-object, then all its parts will be removed from the world.
+
 
 ## Querying
 {"Query": {"left": isize, "top": isize, "right": isize, "bottom": isize}}
@@ -69,6 +101,7 @@ but includes an additional field `timestamp` - the time the item was last update
 The query will not return parts of the multi-object, only the game objects.
 
 Also for multi-objects the `graphic` field will be set to 0x0000.
+
 
 ## Pathfinding
 

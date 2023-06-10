@@ -6,7 +6,7 @@ use log::{debug, warn};
 use crate::world::DynamicWorld;
 
 use tokio::time::Instant;
-use crate::http::server::Item;
+use crate::http::server::{Item, MultiItemPart};
 use crate::mul::colordata::ColorData;
 use crate::mul::{Multi, TileData};
 use crate::world::tiles::TopLevelItem;
@@ -18,6 +18,7 @@ pub struct WorldData {
     pub colors: ColorData,  // data from radarcol.mul
     pub tiledata: TileData, // data from tiledata.mul
     pub multis: Multi,      // data from multi.idx multi.mul
+    pub custom_multis: RwLock<HashMap<u32, Vec<MultiItemPart>>>,
     // etc
 }
 
@@ -27,6 +28,7 @@ impl WorldData {
             colors: ColorData::read().unwrap(),
             tiledata: TileData::read().unwrap(),
             multis: Multi::read().unwrap(),
+            custom_multis: RwLock::new(HashMap::new()),
         }
     }
 }
@@ -34,22 +36,6 @@ impl WorldData {
 
 pub struct WorldModel {
     pub data: Arc<WorldData>,
-
-    // TODO
-    /*
-        world 0: 768x512
-        world 1: 768x512
-        world 2: 288x200
-        world 3: 320x256
-        world 4: 181x181
-        world 5: 160x512
-     */
-    // world0: DynamicWorld,
-    // world1: DynamicWorld,
-    // world2: DynamicWorld,
-    // world3: DynamicWorld,
-    // world4: DynamicWorld,
-    // world5: DynamicWorld,
     worlds: HashMap<u8, DynamicWorld>,
 
     // TODO replace HashMap with HashSet by hashing TopLevelItem only over the serial field
@@ -65,11 +51,16 @@ impl WorldModel {
             items_index: RwLock::new(HashMap::new()),
         };
 
-        for (world, w,h) in [(0, 768, 512), (1, 768, 512), (2, 288, 200), (3, 320, 256), (4, 181, 181), (5, 160, 512)] {
-            let probe = StaticWorld::probe(world);
-            if probe {
-                result.worlds.insert(world, DynamicWorld::new(data.clone(), world, w, h));
-                debug!("world {world} is loaded");
+        let world_specs = [(0, 768, 512), (1, 768, 512), (2, 288, 200), (3, 320, 256), (4, 181, 181), (5, 160, 512)];
+        for (world, w,h) in world_specs {
+            match StaticWorld::probe(world, w, h) {
+                Some((w, h)) => {
+                    result.worlds.insert(world, DynamicWorld::new(data.clone(), world, w, h));
+                    debug!("world {world} is loaded");
+                }
+                None => {
+                    debug!("No files found for world {world}")
+                }
             }
         }
 
@@ -142,7 +133,6 @@ impl WorldModel {
 
     pub fn insert_item(&self, world: u8, x: isize, y: isize, z: i8, serial: u32, graphic: u32, last_updated: u64) {
         let mut index = self.items_index.write().unwrap();
-        let world_model = self.world(world);
 
         // delete old item
         let old = index.remove(&serial);
@@ -154,7 +144,27 @@ impl WorldModel {
         // insert new
         index.insert(serial, TopLevelItem{world, x, y, z, serial, graphic, timestamp: last_updated });
 
+        let world_model = self.world(world);
         world_model.insert_item(x, y, z, serial, graphic, );
+    }
+
+    pub fn insert_multi_item(&self, world: u8, x: isize, y: isize, z: i8, serial: u32, graphic: u32, parts: &Vec<MultiItemPart>, last_updated: u64) {
+        let mut index = self.items_index.write().unwrap();
+
+        let old = index.remove(&serial);
+        if let Some(TopLevelItem{ world, x, y, z, serial, graphic, timestamp }) = old {
+            let world_model = self.world(world);
+            world_model.delete_item(x, y, z, serial, graphic);
+        }
+
+        let mut custom_multis = self.data.custom_multis.write().unwrap();
+        let _old_parts = custom_multis.remove(&serial);
+        custom_multis.insert(serial, parts.clone());
+
+        index.insert(serial, TopLevelItem{world, x, y, z, serial, graphic, timestamp: last_updated});
+
+        let world_model = self.world(world);
+        world_model.insert_item(x, y, z, serial, graphic);
     }
 
 

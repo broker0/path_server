@@ -101,6 +101,27 @@ pub struct Point {
 }
 
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct MultiItemPart {
+    pub x: isize,
+    pub y: isize,
+    pub z: i8,
+    pub graphic: u16,
+}
+
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct MultiItem {
+    pub world: u8,
+    pub serial: u32,
+    pub x: isize,
+    pub y: isize,
+    pub z: i8,
+    pub graphic: u32,
+    pub parts: Vec<MultiItemPart>
+}
+
+
 #[derive(Serialize, Deserialize, Debug)]
 pub enum ApiRequest {
     WorldSave{file_name: String, },
@@ -109,6 +130,8 @@ pub enum ApiRequest {
 
     ItemsDel {serials: Vec<u32>, },
     ItemsAdd {items: Vec<Item>, },
+
+    MultiItemsAdd {items: Vec<MultiItem> },
 
     Query {world: u8, left: isize, top: isize, right: isize, bottom: isize, },
 
@@ -174,6 +197,9 @@ impl ApiHandler {
                         => self.handle_items_del(&serials),
                     ApiRequest::ItemsAdd {items}
                         => self.handle_items_add(&items),
+
+                    ApiRequest::MultiItemsAdd {items}
+                        => self.handle_multi_items_add(&items),
 
                     ApiRequest::Query {world, left, top, right, bottom}
                         => self.handle_query(world, left, top, right, bottom),
@@ -272,6 +298,18 @@ impl ApiHandler {
         ApiResponse::Success {}
     }
 
+    fn handle_multi_items_add(&self, items: &Vec<MultiItem>) -> ApiResponse {
+        info!("Api::handle_multi_items_add {} items", items.len());
+
+        let start = SystemTime::now();
+        let since_epoch = start.duration_since(UNIX_EPOCH).expect("Failed to get current time");
+        let current_time = since_epoch.as_secs();
+
+        for MultiItem { world, serial, x, y, z, graphic, parts } in items {
+            self.world_model.insert_multi_item(*world, *x, *y, *z, *serial, *graphic, parts, current_time);
+        }
+        ApiResponse::Success {}
+    }
 
     #[allow(dead_code)]
     fn handle_query(&self, world: u8, left: isize, top: isize, right: isize, bottom: isize) -> ApiResponse {
