@@ -236,61 +236,88 @@ impl DynamicWorld {
     }
 
     fn insert_multi_parts(&self, item: DynamicWorldObject) {
-        let multi = &self.data.multis;
         let (serial, graphic, x, y, z) = match item {
             DynamicWorldObject::GameObject { x, y, z, serial, graphic } => (serial, graphic, x, y, z,),
             _ => unreachable!(),
         };
 
-        // TODO batch adding of parts of multi-objects
-        assert_ne!(graphic & 0x10000, 0);
-        let multi_id = (graphic & 0xFFFF) as u16;
-        let multi_parts = multi.multi_parts(multi_id);
-        for (counter, part) in multi_parts.iter().enumerate() {
-            let x = x + part.x as isize;
-            let y = y + part.y as isize;
-            let z = z + part.z as i8;
+        if graphic & 0x10000 != 0 {
+            // standard multi
+            // TODO batch adding of parts of multi-objects
+            assert_ne!(graphic & 0x10000, 0);
+            let multi = &self.data.multis;
+            let multi_id = (graphic & 0xFFFF) as u16;
+            let multi_parts = multi.multi_parts(multi_id);
+            for (counter, part) in multi_parts.iter().enumerate() {
+                let x = x + part.x as isize;
+                let y = y + part.y as isize;
+                let z = z + part.z as i8;
 
-            // each part of a multi-object is a unique item
-            self.overlay_insert_item(DynamicWorldObject::MultiPart { x, y, z,
-                tile: part.static_tile as u32,
-                parent: serial,
-                counter: counter as u16,
-            });
-        }
+                // each part of a multi-object is a unique item
+                self.overlay_insert_item(DynamicWorldObject::MultiPart { x, y, z,
+                    tile: part.static_tile as u32,
+                    parent: serial,
+                    counter: counter as u16,
+                });
+            };
+        } else if graphic & 0x20000 != 0 {
+            // custom multi
+            info!("try insert parts of multi-object to world");
+            let custom_multis = self.data.custom_multis.read().unwrap();
+            let multi_parts = custom_multis.get(&serial);
+            if let Some(multi_parts) = multi_parts {
+                info!("found parts for multi-object {serial}");
+                for (counter, part)  in multi_parts.iter().enumerate() {
+                    self.overlay_insert_item(DynamicWorldObject::MultiPart { x: part.x, y: part.y, z: part.z,
+                        tile: part.graphic as u32,
+                        parent: serial,
+                        counter: counter as u16
+                    })
+
+                }
+            } else {
+                warn!("no parts found for multi-object {serial}")
+            }
+        } else {
+            panic!("invalid multi-object")
+        };
     }
 
     fn delete_multi_parts(&self, item: &DynamicWorldObject) {
-        let multi = &self.data.multis;
         let (serial, graphic, x, y, z) = match item {
             DynamicWorldObject::GameObject { x, y, z, serial, graphic } => (serial, graphic, x, y, z,),
             _ => unreachable!(),
         };
 
         // TODO batch deleting of parts of multi-objects
-        assert_ne!(graphic & 0x10000, 0);
-        let multi_id = (graphic & 0xFFFF) as u16;
-        let multi_parts = multi.multi_parts(multi_id);
-        for (counter, part) in multi_parts.iter().enumerate() {
-            let x = x + part.x as isize;
-            let y = y + part.y as isize;
-            let z = z + part.z as i8;
+        if graphic & 0x10000 != 0 {
+            let multi = &self.data.multis;
+            let multi_id = (graphic & 0xFFFF) as u16;
+            let multi_parts = multi.multi_parts(multi_id);
+            for (counter, part) in multi_parts.iter().enumerate() {
+                let x = x + part.x as isize;
+                let y = y + part.y as isize;
+                let z = z + part.z as i8;
 
-            self.overlay_delete_item(&DynamicWorldObject::MultiPart { x, y, z,
-                tile: part.static_tile as u32,
-                parent: *serial,
-                counter: counter as u16,
-            });
+                self.overlay_delete_item(&DynamicWorldObject::MultiPart { x, y, z,
+                    tile: part.static_tile as u32,
+                    parent: *serial,
+                    counter: counter as u16,
+                });
+            }
+        } else if graphic & 0x20000 != 0 {
+
+        } else {
+            panic!("invalid multi-object")
         }
     }
 
     pub fn insert_item(&self, x: isize, y: isize, z: i8, serial: u32, graphic: u32) {
         let item = DynamicWorldObject::GameObject { x, y, z, serial, graphic, };
 
-        if graphic & 0x10000 != 0 {  // multi-object
-            self.insert_multi_parts(item); // add parts of multi-object
-            // add the multi-object itself to the world, but with modified graphics NO_USE
-            self.overlay_insert_item(DynamicWorldObject::GameObject { x, y, z, serial, graphic });
+        if graphic & 0x30000 != 0 {  // multi-object
+            self.insert_multi_parts(item);  // add parts of multi-object
+            self.overlay_insert_item(item); // add the multi-object itself to the world
         } else {
             self.overlay_insert_item(item);
         }
@@ -299,7 +326,7 @@ impl DynamicWorld {
     pub fn delete_item(&self, x: isize, y: isize, z: i8, serial: u32, graphic: u32) {
         let item = DynamicWorldObject::GameObject { x, y, z, serial, graphic, };
 
-        if graphic & 0x10000 != 0 {
+        if graphic & 0x30000 != 0 {
             self.delete_multi_parts(&item);
             self.overlay_delete_item(&DynamicWorldObject::GameObject { x, y, z, serial, graphic });
         } else {

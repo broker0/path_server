@@ -131,7 +131,7 @@ pub enum ApiRequest {
     ItemsDel {serials: Vec<u32>, },
     ItemsAdd {items: Vec<Item>, },
 
-    MultiItemsAdd {items: Vec<MultiItem> },
+    MultiItemsAdd {multi_items: Vec<MultiItem> },
 
     Query {world: u8, left: isize, top: isize, right: isize, bottom: isize, },
 
@@ -198,8 +198,8 @@ impl ApiHandler {
                     ApiRequest::ItemsAdd {items}
                         => self.handle_items_add(&items),
 
-                    ApiRequest::MultiItemsAdd {items}
-                        => self.handle_multi_items_add(&items),
+                    ApiRequest::MultiItemsAdd { multi_items }
+                        => self.handle_multi_items_add(&multi_items),
 
                     ApiRequest::Query {world, left, top, right, bottom}
                         => self.handle_query(world, left, top, right, bottom),

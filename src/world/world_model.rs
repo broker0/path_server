@@ -151,18 +151,26 @@ impl WorldModel {
     pub fn insert_multi_item(&self, world: u8, x: isize, y: isize, z: i8, serial: u32, graphic: u32, parts: &Vec<MultiItemPart>, last_updated: u64) {
         let mut index = self.items_index.write().unwrap();
 
+        // try delete main item from index
         let old = index.remove(&serial);
-        if let Some(TopLevelItem{ world, x, y, z, serial, graphic, timestamp }) = old {
+        if let Some(TopLevelItem{ world, x, y, z, serial, graphic, .. }) = old {
+            // try delete multi parts from world
             let world_model = self.world(world);
             world_model.delete_item(x, y, z, serial, graphic);
         }
 
-        let mut custom_multis = self.data.custom_multis.write().unwrap();
-        let _old_parts = custom_multis.remove(&serial);
-        custom_multis.insert(serial, parts.clone());
+        {
+            // remove old multi parts
+            let mut custom_multis = self.data.custom_multis.write().unwrap();
+            let _old_parts = custom_multis.remove(&serial);
+            // insert new multi parts
+            custom_multis.insert(serial, parts.clone());
 
-        index.insert(serial, TopLevelItem{world, x, y, z, serial, graphic, timestamp: last_updated});
+            // insert main item to index
+            index.insert(serial, TopLevelItem{world, x, y, z, serial, graphic, timestamp: last_updated});
+        }
 
+        // insert multi-parts to the world
         let world_model = self.world(world);
         world_model.insert_item(x, y, z, serial, graphic);
     }

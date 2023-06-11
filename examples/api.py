@@ -2,7 +2,7 @@ import requests
 
 
 class PathApi:
-    def __init__(self, api_url):
+    def __init__(self, api_url="http://127.0.0.1:3000/"):
         self.url = api_url
         self.options = TraceOptions()
 
@@ -20,6 +20,10 @@ class PathApi:
 
     def ItemsAdd(self, items):
         request = {"ItemsAdd": {"items": items}}
+        return self.api_request(request)
+
+    def MultiItemsAdd(self, items):
+        request = {"MultiItemsAdd": {"multi_items": items}}
         return self.api_request(request)
 
     def ItemsDel(self, serials):
