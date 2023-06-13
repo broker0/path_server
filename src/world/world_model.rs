@@ -148,6 +148,7 @@ impl WorldModel {
         world_model.insert_item(x, y, z, serial, graphic, );
     }
 
+
     pub fn insert_multi_item(&self, world: u8, x: isize, y: isize, z: i8, serial: u32, graphic: u32, parts: &Vec<MultiItemPart>, last_updated: u64) {
         let mut index = self.items_index.write().unwrap();
 
@@ -159,9 +160,9 @@ impl WorldModel {
             world_model.delete_item(x, y, z, serial, graphic);
         }
 
-        {
+        // update custom_multis parts
+        if let Ok(mut custom_multis) = self.data.custom_multis.write() {
             // remove old multi parts
-            let mut custom_multis = self.data.custom_multis.write().unwrap();
             let _old_parts = custom_multis.remove(&serial);
             // insert new multi parts
             custom_multis.insert(serial, parts.clone());

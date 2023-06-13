@@ -103,10 +103,11 @@ pub struct Point {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct MultiItemPart {
+    pub graphic: u16,
     pub x: isize,
     pub y: isize,
     pub z: i8,
-    pub graphic: u16,
+    pub flags: u32,
 }
 
 
