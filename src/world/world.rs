@@ -134,7 +134,8 @@ impl StaticWorld {
             top + bottom
         } else {
             left + right
-        } / 2;
+        };
+        let standing_z = if standing_z < 0 { standing_z-1 } else { standing_z } / 2;
 
         // calculate the coordinate z when leaving the tile in the specified direction.
         // one or two vertices are used, depending on whether the given direction is straight or diagonal
