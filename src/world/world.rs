@@ -415,7 +415,7 @@ impl DynamicWorld {
                 match item {
                     DynamicWorldObject::MultiPart { tile, z, .. } |
                     DynamicWorldObject::GameObject { graphic: tile, z, .. } => {
-                        if tile & 0x10000 != 0 {
+                        if tile & 0x30000 != 0 {
                             continue    // skip multi-objects
                         }
                         let obj = WorldTile {
