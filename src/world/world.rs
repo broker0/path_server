@@ -272,9 +272,7 @@ impl DynamicWorld {
             } else {
                 warn!("no parts found for multi-object {serial}")
             }
-        } else {
-            panic!("invalid multi-object")
-        };
+        }
     }
 
     fn overlay_delete_multi_parts(&self, overlay: &mut WriteCache, item: &DynamicWorldObject) {
