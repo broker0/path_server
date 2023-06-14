@@ -96,8 +96,8 @@ impl WorldModel {
         self.clear_state();
         let items: HashMap<u32, TopLevelItem> = serde_json::from_str(&state).unwrap();
 
-        for (_, TopLevelItem{ world, x, y, z, serial, graphic, timestamp: last_updated }) in items {
-            self.insert_item(world, x, y, z, serial, graphic, last_updated);
+        for (_, item) in items {
+            self.insert_item(item);
         }
     }
 
@@ -131,25 +131,26 @@ impl WorldModel {
     }
 
 
-    pub fn insert_item(&self, world: u8, x: isize, y: isize, z: i8, serial: u32, graphic: u32, last_updated: u64) {
+    pub fn insert_item(&self, item: TopLevelItem) {
         let mut index = self.items_index.write().unwrap();
 
         // delete old item
-        let old = index.remove(&serial);
+        let old = index.remove(&item.serial);
         if let Some(TopLevelItem{ world, x, y, z, serial, graphic , .. }) = old {
             let world_model = self.world(world);
             world_model.delete_item(x, y, z, serial, graphic);
         }
 
-        // insert new
-        index.insert(serial, TopLevelItem{world, x, y, z, serial, graphic, timestamp: last_updated });
+        let world_model = self.world(item.world);
+        world_model.insert_item(item.x, item.y, item.z, item.serial, item.graphic, );
 
-        let world_model = self.world(world);
-        world_model.insert_item(x, y, z, serial, graphic, );
+        // insert new
+        index.insert(item.serial, item);
+
     }
 
 
-    pub fn insert_multi_item(&self, item: &Item, parts: &Vec<MultiItemPart>, last_updated: u64) {
+    pub fn insert_multi_item(&self, item: TopLevelItem, parts: &Vec<MultiItemPart>) {
         let mut index = self.items_index.write().unwrap();
 
         // try delete main item from index
@@ -162,13 +163,8 @@ impl WorldModel {
 
         // update custom_multis parts
         if let Ok(mut custom_multis) = self.data.custom_multis.write() {
-            // remove old multi parts
-            let _old_parts = custom_multis.remove(&item.serial);
-            // insert new multi parts
+            custom_multis.remove(&item.serial);
             custom_multis.insert(item.serial, parts.clone());
-
-            // insert main item to index
-            index.insert(item.serial, TopLevelItem::from_item(item, last_updated));
         }
 
         // insert multi-parts to the world

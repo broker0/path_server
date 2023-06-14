@@ -257,6 +257,18 @@ pub struct TopLevelItem {
 }
 
 impl TopLevelItem {
+    pub fn new(world: u8, x: isize, y: isize, z: i8, serial: u32, graphic: u32, timestamp: u64) -> TopLevelItem {
+        Self {
+            world,
+            x,
+            y,
+            z,
+            serial,
+            graphic,
+            timestamp,
+        }
+    }
+
     pub fn from_item(item: &Item, timestamp: u64) -> TopLevelItem {
         Self {
             world: item.world,

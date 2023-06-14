@@ -17,6 +17,7 @@ use image::{ImageBuffer, Rgb};
 use log::{error, info};
 
 use crate::world::{WorldModel, WorldSurveyor};
+use crate::world::tiles::TopLevelItem;
 
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
@@ -286,8 +287,8 @@ impl ApiHandler {
         let since_epoch = start.duration_since(UNIX_EPOCH).expect("Failed to get current time");
         let current_time = since_epoch.as_secs();
 
-        for Item{ world, serial, graphic, x, y, z, .. } in items {
-            self.world_model.insert_item(*world, *x, *y, *z, *serial, *graphic, current_time);
+        for &Item{ world, serial, graphic, x, y, z, .. } in items {
+            self.world_model.insert_item(TopLevelItem::new(world, x, y, z, serial, graphic, current_time));
         }
         ApiResponse::Success {}
     }
@@ -300,12 +301,12 @@ impl ApiHandler {
         let current_time = since_epoch.as_secs();
 
         for MultiItem { item, parts } in items {
-            self.world_model.insert_multi_item(item, parts, current_time);
+            let &Item {world, x, y, z, serial, graphic, ..} = item;
+            self.world_model.insert_multi_item(TopLevelItem::new(world, x, y, z, serial, graphic, current_time), parts);
         }
         ApiResponse::Success {}
     }
 
-    #[allow(dead_code)]
     fn handle_query(&self, world: u8, left: isize, top: isize, right: isize, bottom: isize) -> ApiResponse {
         info!("Api::query world: {world}, area: {left}, {top} - {right}, {bottom}");
         let mut items = Vec::new();
@@ -315,7 +316,6 @@ impl ApiHandler {
     }
 
 
-    #[allow(dead_code)]
     async fn handle_trace_path(&self, world: u8, sx: isize, sy: isize, sz: i8, dx: isize, dy: isize, dz: i8, options: &TraceOptions) -> ApiResponse {
         info!("Api::trace_path world {world}, from {sx}, {sy}, {sz} -> to {dx}, {dy}, {dz}");
         let model = self.world_model.clone();
@@ -334,7 +334,6 @@ impl ApiHandler {
     }
 
 
-    #[allow(dead_code)]
     async fn handle_render_area(&self, world: u8, left: Option<isize>, top: Option<isize>, right: Option<isize>, bottom: Option<isize>, color: Option<isize>, points: &Vec<Point>) -> ApiResponse {
         // TODO do rendering in a separate thread, as well as path calculation
         let curr_world = self.world_model.world(world);
