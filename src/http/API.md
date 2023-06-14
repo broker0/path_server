@@ -47,20 +47,23 @@ if the object is a multi-object, then its parts are added to the world.
 ### Custom Houses
 {"MultiItemsAdd": 
     [
-        {"world": u8, 
-         "serial": u32, 
-         "x": isize, 
-         "y": isize, 
-         "z": u8, 
-         "graphic": u32, 
-         "parts": [
+        {"item": 
+            {"world": u8, 
+             "serial": u32, 
+             "x": isize, 
+             "y": isize, 
+             "z": u8, 
+             "graphic": u32
+        },
+        "parts": [
             {"x": isize, 
              "y": isize, 
              "z": i8, 
-             "graphic": u16"
+             "graphic": u16,
+             "flags": u32
             },
             ...
-         ]
+          ]
         },
         ...
     ]
@@ -100,7 +103,7 @@ but includes an additional field `timestamp` - the time the item was last update
 
 The query will not return parts of the multi-object, only the game objects.
 
-Also for multi-objects the `graphic` field will be set to 0x0000.
+Also for multi-objects the `graphic` field will have a flag 0x10000 or 0x20000.
 
 
 ## Pathfinding
