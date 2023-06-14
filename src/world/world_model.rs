@@ -90,7 +90,7 @@ impl WorldModel {
 
     pub fn load_state(&self, file_name: &str) {
         let mut file = File::open(file_name).unwrap();
-        let mut state = String::with_capacity(1024);
+        let mut state = String::new();
         file.read_to_string(&mut state).unwrap();   // count of bytes readed
 
         self.clear_state();
@@ -149,11 +149,11 @@ impl WorldModel {
     }
 
 
-    pub fn insert_multi_item(&self, world: u8, x: isize, y: isize, z: i8, serial: u32, graphic: u32, parts: &Vec<MultiItemPart>, last_updated: u64) {
+    pub fn insert_multi_item(&self, item: &Item, parts: &Vec<MultiItemPart>, last_updated: u64) {
         let mut index = self.items_index.write().unwrap();
 
         // try delete main item from index
-        let old = index.remove(&serial);
+        let old = index.remove(&item.serial);
         if let Some(TopLevelItem{ world, x, y, z, serial, graphic, .. }) = old {
             // try delete multi parts from world
             let world_model = self.world(world);
@@ -163,17 +163,17 @@ impl WorldModel {
         // update custom_multis parts
         if let Ok(mut custom_multis) = self.data.custom_multis.write() {
             // remove old multi parts
-            let _old_parts = custom_multis.remove(&serial);
+            let _old_parts = custom_multis.remove(&item.serial);
             // insert new multi parts
-            custom_multis.insert(serial, parts.clone());
+            custom_multis.insert(item.serial, parts.clone());
 
             // insert main item to index
-            index.insert(serial, TopLevelItem{world, x, y, z, serial, graphic, timestamp: last_updated});
+            index.insert(item.serial, TopLevelItem::from_item(item, last_updated));
         }
 
         // insert multi-parts to the world
-        let world_model = self.world(world);
-        world_model.insert_item(x, y, z, serial, graphic);
+        let world_model = self.world(item.world);
+        world_model.insert_item(item.x, item.y, item.z, item.serial, item.graphic);
     }
 
 

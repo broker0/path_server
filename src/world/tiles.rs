@@ -1,5 +1,6 @@
 use std::cmp::Ordering;
 use serde::{Deserialize, Serialize};
+use crate::http::server::Item;
 use crate::mul::tiledata::{LandTileData, MulTileFlags, StaticTileData};
 
 /// stores information about dynamic objects in the world
@@ -46,6 +47,11 @@ impl DynamicWorldObject {
             serial: u32::MAX,
             graphic: u32::MAX,
         }
+    }
+
+    #[inline]
+    pub fn game_object(x: isize, y: isize, z: i8, serial: u32, graphic: u32) -> DynamicWorldObject {
+        Self::GameObject { x, y, z, serial, graphic, }
     }
 }
 
@@ -248,4 +254,18 @@ pub struct TopLevelItem {
     pub graphic: u32,
     #[serde(default)]
     pub timestamp: u64,
+}
+
+impl TopLevelItem {
+    pub fn from_item(item: &Item, timestamp: u64) -> TopLevelItem {
+        Self {
+            world: item.world,
+            x: item.x,
+            y: item.y,
+            z: item.z,
+            serial: item.serial,
+            graphic: item.graphic,
+            timestamp,
+        }
+    }
 }

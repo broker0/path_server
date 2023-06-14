@@ -76,8 +76,6 @@ impl TraceOptions {
             all_points: None,
         }
     }
-
-
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -113,13 +111,8 @@ pub struct MultiItemPart {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct MultiItem {
-    pub world: u8,
-    pub serial: u32,
-    pub x: isize,
-    pub y: isize,
-    pub z: i8,
-    pub graphic: u32,
-    pub parts: Vec<MultiItemPart>
+    pub item: Item,
+    pub parts: Vec<MultiItemPart>,
 }
 
 
@@ -306,8 +299,8 @@ impl ApiHandler {
         let since_epoch = start.duration_since(UNIX_EPOCH).expect("Failed to get current time");
         let current_time = since_epoch.as_secs();
 
-        for MultiItem { world, serial, x, y, z, graphic, parts } in items {
-            self.world_model.insert_multi_item(*world, *x, *y, *z, *serial, *graphic, parts, current_time);
+        for MultiItem { item, parts } in items {
+            self.world_model.insert_multi_item(item, parts, current_time);
         }
         ApiResponse::Success {}
     }

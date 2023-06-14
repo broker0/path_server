@@ -322,7 +322,7 @@ impl DynamicWorld {
     }
 
     pub fn insert_item(&self, x: isize, y: isize, z: i8, serial: u32, graphic: u32) {
-        let item = DynamicWorldObject::GameObject { x, y, z, serial, graphic, };
+        let item = DynamicWorldObject::game_object(x, y, z, serial, graphic);
         let mut overlay = self.write_overlay();
 
         if graphic & 0x30000 != 0 {  // multi-object
@@ -332,7 +332,7 @@ impl DynamicWorld {
     }
 
     pub fn delete_item(&self, x: isize, y: isize, z: i8, serial: u32, graphic: u32) {
-        let item = DynamicWorldObject::GameObject { x, y, z, serial, graphic, };
+        let item = DynamicWorldObject::game_object(x, y, z, serial, graphic);
         let mut overlay = self.write_overlay();
 
         if graphic & 0x30000 != 0 {
