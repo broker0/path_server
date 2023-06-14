@@ -244,7 +244,7 @@ impl WorldTile {
 }
 
 /// The game object representation used for indexing is a "double"/"reflection" of the DynamicWorldObject
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct TopLevelItem {
     pub world: u8,
     pub x: isize,

@@ -12,6 +12,8 @@ use crate::mul::{Multi, TileData};
 use crate::world::tiles::TopLevelItem;
 use crate::world::world::StaticWorld;
 
+use serde::{Deserialize, Serialize};
+
 
 /// Stores data that is not a map or static
 pub struct WorldData {
@@ -31,6 +33,13 @@ impl WorldData {
             custom_multis: RwLock::new(HashMap::new()),
         }
     }
+}
+
+
+#[derive(Serialize, Deserialize)]
+struct WorldState {
+    pub custom_multis: HashMap<u32, Vec<MultiItemPart>>,
+    pub items_index: HashMap<u32, TopLevelItem>
 }
 
 
@@ -79,8 +88,15 @@ impl WorldModel {
 
     pub fn save_state(&self, file_name: &str) {
         let state = {
-            let r = self.items_index.read().unwrap();
-            serde_json::to_string_pretty(&*r).unwrap()
+            let multis = self.data.custom_multis.read().unwrap();
+            let items = self.items_index.read().unwrap();
+
+            let ws = WorldState {
+              custom_multis: multis.clone(),
+                items_index: items.clone(),
+            };
+
+            serde_json::to_string_pretty(&ws).unwrap()
         };
 
         let mut file = File::create(file_name).unwrap();
@@ -93,10 +109,15 @@ impl WorldModel {
         let mut state = String::new();
         file.read_to_string(&mut state).unwrap();   // count of bytes readed
 
+        let ws: WorldState = serde_json::from_str(&state).unwrap();
         self.clear_state();
-        let items: HashMap<u32, TopLevelItem> = serde_json::from_str(&state).unwrap();
 
-        for (_, item) in items {
+        {
+            let mut multis = self.data.custom_multis.write().unwrap();
+            multis.clone_from(&ws.custom_multis);
+        }
+
+        for (_, item) in ws.items_index {
             self.insert_item(item);
         }
     }
@@ -115,6 +136,8 @@ impl WorldModel {
             self.delete_item(*serial);
         }
 
+        let mut multis = self.data.custom_multis.write().unwrap();
+        multis.clear();
     }
 
 
@@ -156,7 +179,6 @@ impl WorldModel {
         // try delete main item from index
         let old = index.remove(&item.serial);
         if let Some(TopLevelItem{ world, x, y, z, serial, graphic, .. }) = old {
-            // try delete multi parts from world
             let world_model = self.world(world);
             world_model.delete_item(x, y, z, serial, graphic);
         }
@@ -170,6 +192,8 @@ impl WorldModel {
         // insert multi-parts to the world
         let world_model = self.world(item.world);
         world_model.insert_item(item.x, item.y, item.z, item.serial, item.graphic);
+
+        index.insert(item.serial, item);    // insert main item to index
     }
 
 
