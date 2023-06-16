@@ -101,10 +101,12 @@
             document.getElementById("trace_path").onclick = function() {
                 
                 var reply = api_request_json(
-                    TracePath(0, 
+                    TracePath(
+                        get_int("world"),
                         get_int("sx"), get_int("sy"), get_int("sz"), 
                         get_int("dx"), get_int("dy"), get_int("dz"),
-                        get_json("options"))
+                        get_json("options")
+                    )
                 ).then(function(reply) {
                     var options = get_json("options");
                     var color = 16711935;   // magenta
@@ -114,11 +116,9 @@
                             
                     api_request_bin(
                             RenderArea(
-                                0,  // world
-                                parseInt(document.getElementById("left").value), 
-                                parseInt(document.getElementById("top").value), 
-                                parseInt(document.getElementById("right").value), 
-                                parseInt(document.getElementById("bottom").value),
+                                get_int("world"),
+                                get_int("left"),  get_int("top"),
+                                get_int("right"), get_int("bottom"),
                                 color,
                                 reply["TraceReply"]["points"]    // points
                             )                
@@ -176,7 +176,7 @@
              <h3>path finding</h3>
              
              <h4>start position</h4>
-             x: <input id="sx" value="2155" class="short"> y: <input id="sy" value="3618" class="short"> z: <input id="sz" value="0" class="short">
+             x: <input id="sx" value="2155" class="short"> y: <input id="sy" value="3618" class="short"> z: <input id="sz" value="0" class="short"> world: <input id="world" value="0" class="short">
              
              <h4>end position</h4>
              x: <input id="dx" value="3425" class="short"> y: <input id="dy" value="105" class="short"> z: <input id="dz" value="0" class="short">
@@ -204,7 +204,6 @@
             
              <br>
              <input type="button" value="search the path!" id="trace_path">
-             <!-- <input type="button" value="area" id="trace_area"> -->
           </div>
         </div>
         
