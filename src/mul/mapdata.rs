@@ -4,6 +4,7 @@ use std::fs::File;
 use std::io::{Error};
 use std::io::{SeekFrom};
 use std::mem;
+use std::path::Path;
 use log::trace;
 use crate::mulreader::{mul_read_i8, mul_read_u16, mul_read_u32, mul_read_u64};
 use crate::uop_mapdata::{UopHeader, UopEntryHeader, UopEntry, uop_hash};
@@ -44,9 +45,9 @@ pub struct Land {
 
 
 impl Land {
-    pub fn read(path: &str, x_blocks: usize, y_blocks: usize) -> Result<Self, Error> {
+    pub fn read(data_path: &Path, world: u8, x_blocks: usize, y_blocks: usize) -> Result<Self, Error> {
         trace!("Land::read");
-        let f = &mut BufReader::new(File::open(path)?);
+        let f = &mut BufReader::new(File::open(data_path.join(format!("map{world}.mul")))?);
 
         let mut result = Land {
             blocks: Vec::with_capacity(x_blocks as usize*y_blocks as usize),
@@ -62,9 +63,9 @@ impl Land {
         Ok(result)
     }
 
-    pub fn read_uop(path: &str, x_blocks: usize, y_blocks: usize, world: u8) -> Result<Self, Error> {
+    pub fn read_uop(data_path: &Path, world: u8, x_blocks: usize, y_blocks: usize) -> Result<Self, Error> {
         trace!("Land::read_uop");
-        let f = &mut BufReader::new(File::open(path)?);
+        let f = &mut BufReader::new(File::open(data_path.join(format!("map{world}LegacyMUL.uop")))?);
         let mut result = Land {
             blocks: Vec::with_capacity(x_blocks as usize*y_blocks as usize),
         };

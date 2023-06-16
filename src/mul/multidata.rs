@@ -4,6 +4,7 @@ use std::fs::File;
 use std::io::{Error};
 use std::io::BufReader;
 use std::mem;
+use std::path::Path;
 use log::{debug, trace};
 use crate::mul::{LOOKUP_IDX_RECORD_SIZE, MulLookupIndexRecord};
 
@@ -48,9 +49,9 @@ pub struct Multi {
 }
 
 impl Multi {
-    pub fn read() -> Result<Self, Error> {
+    pub fn read(data_path: &Path) -> Result<Self, Error> {
         trace!("Multi::read");
-        let f = File::open("multi.mul")?;
+        let f = File::open(data_path.join("multi.mul"))?;
         let f_size = f.metadata()?.len() as usize;
         let f = &mut BufReader::new(f);
 

@@ -4,6 +4,7 @@ use std::fs::File;
 use std::io::{Error, Seek};
 use std::io::BufReader;
 use std::mem;
+use std::path::Path;
 use log::trace;
 
 /*
@@ -139,14 +140,14 @@ pub struct TileData {
 }
 
 impl TileData {
-    pub fn read() -> Result<Self, Error> {
+    pub fn read(data_path: &Path) -> Result<Self, Error> {
         trace!("TileData::read");
         let mut result = TileData {
             land_tiles: Vec::with_capacity(16384),
             static_tiles: Vec::with_capacity(16384),
         };
 
-        let f = File::open("tiledata.mul")?;
+        let f = File::open(data_path.join("tiledata.mul"))?;
         let file_len = f.metadata()?.len();
         let f = &mut BufReader::new(f);
 

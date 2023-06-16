@@ -2,6 +2,7 @@ use std::convert::Infallible;
 use std::fs;
 use std::io::{Cursor};
 use std::net::SocketAddr;
+use std::path::{PathBuf};
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -150,13 +151,15 @@ pub enum ApiResponse {
 #[derive(Clone)]
 struct ApiHandler {
     world_model: Arc<WorldModel>,
+    ui_path: PathBuf,
 }
 
 
 impl ApiHandler {
-    pub fn new(context: Arc<WorldModel>) -> Self {
+    pub fn new(world_model: Arc<WorldModel>, ui_path: PathBuf) -> Self {
         Self {
-            world_model: context
+            world_model,
+            ui_path,
         }
     }
 
@@ -422,11 +425,13 @@ async fn handle_request(api: Arc<ApiHandler>, req: Request<Body>) -> Result<Resp
     }
 
     if req.method() == Method::GET && req.uri().path() == "/ui/" {
-        if let Ok(file_contents) = fs::read_to_string("www/ui.html") {
+        if let Ok(file_contents) = fs::read_to_string(&api.ui_path) {
             let response = Response::builder()
                 .body(Body::from(file_contents))
                 .unwrap();
             return Ok(response);
+        } else {
+            error!("Cannot read file {}", api.ui_path.display());
         }
     }
 
@@ -439,10 +444,10 @@ async fn handle_request(api: Arc<ApiHandler>, req: Request<Body>) -> Result<Resp
 }
 
 
-async fn http_svc(model: Arc<WorldModel>, http_stop: Receiver<()>) {
-    let addr: SocketAddr = ([127, 0, 0, 1], 3000).into();
+async fn http_svc(model: Arc<WorldModel>, ui_path: PathBuf, http_port: u16, http_stop: Receiver<()>) {
+    let addr: SocketAddr = ([127, 0, 0, 1], http_port).into();
 
-    let api_handler = Arc::new(ApiHandler::new(model));
+    let api_handler = Arc::new(ApiHandler::new(model, ui_path));
 
     let make_service = make_service_fn(move |_conn| {
         let api = api_handler.clone(); // clone the Arc reference
@@ -467,7 +472,8 @@ async fn http_svc(model: Arc<WorldModel>, http_stop: Receiver<()>) {
     }
 }
 
-pub fn http_server_service(model: Arc<WorldModel>, http_stop: Receiver<()>) {
+
+pub fn http_server_service(model: Arc<WorldModel>, ui_path: PathBuf, http_port: u16, http_stop: Receiver<()>) {
     // start http service in single thread runtime
     let rt = tokio::runtime::Builder::new_current_thread()
         .enable_all()
@@ -477,5 +483,5 @@ pub fn http_server_service(model: Arc<WorldModel>, http_stop: Receiver<()>) {
         .unwrap();
 
     // block thread while service is running
-    rt.block_on(http_svc(model, http_stop));
+    rt.block_on(http_svc(model, ui_path, http_port, http_stop));
 }

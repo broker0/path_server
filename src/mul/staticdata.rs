@@ -2,6 +2,7 @@ use std::mem;
 use std::io::BufReader;
 use std::fs::File;
 use std::io::{Error};
+use std::path::Path;
 use log::trace;
 use crate::{MulSlice};
 use crate::mul::MulLookupIndexRecord;
@@ -40,10 +41,10 @@ pub struct Static {
 
 
 impl Static {
-    pub fn read(idx_path: &str, data_path: &str, x_blocks: usize, y_blocks: usize) -> Result<Self, Error> {
+    pub fn read(data_path: &Path, world: u8, x_blocks: usize, y_blocks: usize) -> Result<Self, Error> {
         trace!("Static::read");
         // read data file with information about tiles
-        let f = File::open(data_path)?;
+        let f = File::open(data_path.join(format!("statics{world}.mul")))?;
         let f_size = f.metadata()?.len();
         let f = &mut BufReader::new(f);
 
@@ -92,7 +93,7 @@ impl Static {
 
 
         // read index file with information about blocks
-        let fi = &mut BufReader::new(File::open(idx_path)?);
+        let fi = &mut BufReader::new(File::open(data_path.join(format!("staidx{world}.mul")))?);
 
         // let mut i = 0;
         // let mut n = 0;

@@ -3,6 +3,7 @@ use mul::mulreader::*;
 use std::fs::File;
 use std::io::Error;
 use std::io::BufReader;
+use std::path::Path;
 use log::trace;
 
 
@@ -31,13 +32,13 @@ const BLUE_SHIFT: usize = 0;
 
 impl ColorData {
     /// Tries to read data from a file
-    pub fn read() -> Result<Self, Error> {
+    pub fn read(data_path: &Path) -> Result<Self, Error> {
         trace!("ColorData::read");
         let mut result = Self {
             colors: Vec::with_capacity(65536),
         };
 
-        let f = File::open("Radarcol.mul")?;
+        let f = File::open(data_path.join("Radarcol.mul"))?;
         let file_len = f.metadata()?.len();
         let mut f = BufReader::new(f);
         let f = &mut f;

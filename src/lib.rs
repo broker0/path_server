@@ -1,5 +1,7 @@
 use std;
 use std::collections::{BTreeSet, HashMap};
+use std::ffi::{c_char, CStr};
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::thread::JoinHandle;
 use tokio::sync::oneshot::Sender;
@@ -29,7 +31,7 @@ lazy_static! {
 
 
 #[no_mangle]
-pub extern "C" fn start_path_server() -> bool {
+pub extern "C" fn start_path_server(mul_path: *const c_char, ui_path: *const c_char, http_port: u16) -> bool {
     info!("try start path server");
     {
         let mut control = SERVER_CONTROL.lock().unwrap();
@@ -38,9 +40,13 @@ pub extern "C" fn start_path_server() -> bool {
             return false;
         }
 
-        *control = run_service();
+        let mul_path =  unsafe { CStr::from_ptr(mul_path) }.to_str().unwrap();
+        let ui_path = unsafe { CStr::from_ptr(ui_path) }.to_str().unwrap();
+
+        *control = run_service(Path::new(mul_path), PathBuf::from(ui_path), http_port);
         debug!("path_server started");
     }
+
     true
 }
 
@@ -63,18 +69,19 @@ pub extern "C" fn stop_path_server() -> bool {
             }
         }
     }
+
     true
 }
 
 
-fn run_service() -> Option<ServerControl> {
-    let world_model = Arc::new(WorldModel::new(Arc::new(WorldData::new())));
+fn run_service(mul_path: &Path, ui_path: PathBuf, http_port: u16) -> Option<ServerControl> {
+    let world_model = Arc::new(WorldModel::new(&mul_path));
     let (http_stop_tx, http_stop_rx) = tokio::sync::oneshot::channel::<()>();
 
     let handle = {
         let model = world_model.clone();
         std::thread::spawn(move || {
-            http::http_server_service(model, http_stop_rx);
+            http::http_server_service(model, ui_path, http_port, http_stop_rx);
         })
     };
 

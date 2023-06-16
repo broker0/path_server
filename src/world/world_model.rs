@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::path::Path;
 use std::fs::File;
 use std::io::{Read, Write};
 use std::sync::{Arc, RwLock};
@@ -25,11 +26,11 @@ pub struct WorldData {
 }
 
 impl WorldData {
-    pub fn new() -> Self {
+    pub fn new(data_path: &Path) -> Self {
         WorldData {
-            colors: ColorData::read().unwrap(),
-            tiledata: TileData::read().unwrap(),
-            multis: Multi::read().unwrap(),
+            colors: ColorData::read(data_path).unwrap(),
+            tiledata: TileData::read(data_path).unwrap(),
+            multis: Multi::read(data_path).unwrap(),
             custom_multis: RwLock::new(HashMap::new()),
         }
     }
@@ -52,9 +53,9 @@ pub struct WorldModel {
 }
 
 impl WorldModel {
-    pub fn new(data: Arc<WorldData>) -> Self {
+    pub fn new(data_path: &Path) -> Self {
         let mut result = WorldModel {
-            data: data.clone(),
+            data: Arc::new(WorldData::new(data_path)),
             worlds: HashMap::new(),
 
             items_index: RwLock::new(HashMap::new()),
@@ -62,9 +63,9 @@ impl WorldModel {
 
         let world_specs = [(0, 768, 512), (1, 768, 512), (2, 288, 200), (3, 320, 256), (4, 181, 181), (5, 160, 512)];
         for (world, w,h) in world_specs {
-            match StaticWorld::probe(world, w, h) {
+            match StaticWorld::probe(data_path, world, w, h) {
                 Some((w, h)) => {
-                    result.worlds.insert(world, DynamicWorld::new(data.clone(), world, w, h));
+                    result.worlds.insert(world, DynamicWorld::new(data_path, result.data.clone(), world, w, h));
                     debug!("world {world} is loaded");
                 }
                 None => {

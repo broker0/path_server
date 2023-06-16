@@ -21,34 +21,28 @@ pub struct StaticWorld {
 }
 
 impl StaticWorld {
-    pub fn read(world: u8, width_blocks: usize, height_blocks: usize) -> Self {
-        let map_path = &*format!("map{world}.mul");
-        let map_uop_path = &*format!("map{world}LegacyMUL.uop");
-        let static_idx_path = &*format!("staidx{world}.mul");
-        let static_data_path = &*format!("statics{world}.mul");
-
-        // let land = Land::read(map_path, width_blocks, height_blocks).unwrap();
-        let land = Land::read(map_path, width_blocks, height_blocks);
+    pub fn read(data_path: &Path, world: u8, width_blocks: usize, height_blocks: usize) -> Self {
+        let land = Land::read(data_path, world, width_blocks, height_blocks);
         let land = if land.is_ok() {
             land.unwrap()
         } else {
-            warn!("error while read file {map_path}, try use {map_uop_path}");
-            Land::read_uop(map_uop_path, width_blocks, height_blocks, world).unwrap()
+            warn!("error while reading MUL file for world {world}, trying to read UOP file");
+            Land::read_uop(data_path, world,width_blocks, height_blocks).unwrap()
         };
 
         Self {
             width_blocks,
             height_blocks,
             land,
-            statics: Static::read(static_idx_path, static_data_path, width_blocks, height_blocks).unwrap(),
+            statics: Static::read(data_path, world, width_blocks, height_blocks).unwrap(),
         }
     }
 
-    pub fn probe(world: u8, width: usize, height: usize) -> Option<(usize, usize)> {
-        match fs::metadata(format!("map{world}.mul")) {
+    pub fn probe(data_path: &Path, world: u8, width: usize, height: usize) -> Option<(usize, usize)> {
+        match fs::metadata(data_path.join(format!("map{world}.mul"))) {
             Ok(_) => Some((width, height)),
             Err(_) => {
-                match fs::metadata(format!("map{world}LegacyMUL.uop")) {
+                match fs::metadata(data_path.join(format!("map{world}LegacyMUL.uop"))) {
                     Ok(_) => Some((width, height)),
                     Err(_) => None,
                 }
@@ -173,10 +167,10 @@ pub struct DynamicWorld {
 
 
 impl DynamicWorld {
-    pub fn new(world_data: Arc<WorldData>, world: u8, width_blocks: usize, height_blocks: usize) -> Self {
+    pub fn new(data_path: &Path, world_data: Arc<WorldData>, world: u8, width_blocks: usize, height_blocks: usize) -> Self {
         let result = DynamicWorld {
             data: world_data,
-            base: StaticWorld::read(world, width_blocks, height_blocks),
+            base: StaticWorld::read(data_path, world, width_blocks, height_blocks),
             overlay_blocks: RwLock::new(HashMap::new()),
         };
 
@@ -541,6 +535,3 @@ impl DynamicWorld {
         }
     }
 }
-
-
-
