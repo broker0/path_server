@@ -23,7 +23,7 @@ mod http;
 mod world;
 
 
-fn run_service(data_path: &Path, ui_path: PathBuf, http_port: u16) {
+fn run_service(data_path: &Path, ui_file: PathBuf, http_port: u16) {
     let start = Instant::now();
 
     info!("loading data from files, creating the world...");
@@ -35,7 +35,7 @@ fn run_service(data_path: &Path, ui_path: PathBuf, http_port: u16) {
     let handle = {
         let model = world_model.clone();
         std::thread::spawn(move || {
-            http::http_server_service(model, ui_path, http_port,http_stop_rx);
+            http::http_server_service(model, ui_file, http_port, http_stop_rx);
         })
     };
 
@@ -155,6 +155,6 @@ fn parse_cmd_args() -> (PathBuf, PathBuf, u16) {
 }
 
 fn main() {
-    let (data_path, ui_path, http_port) = parse_cmd_args();
-    run_service(&data_path, ui_path, http_port);
+    let (data_path, ui_file, http_port) = parse_cmd_args();
+    run_service(&data_path, ui_file, http_port);
 }

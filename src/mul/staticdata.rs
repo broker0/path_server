@@ -55,7 +55,7 @@ impl Static {
 
         let mut result = Static {
             statics: Vec::with_capacity(tiles_count),
-            blocks: Vec::with_capacity(x_blocks as usize * y_blocks as usize),
+            blocks: Vec::with_capacity(x_blocks * y_blocks),
         };
 
         for _ in 0..tiles_count {

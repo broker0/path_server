@@ -388,7 +388,7 @@ impl<'a> WorldSurveyor<'a> {
                     let dest_pos = Position(dest_x, dest_y, dest_z);
 
                     match visited.entry(dest_pos) {
-                        Entry::Occupied(entry) => {
+                        Entry::Occupied(_) => {
                             continue;
                         }
                         Entry::Vacant(_) => {}

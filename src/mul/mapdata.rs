@@ -50,7 +50,7 @@ impl Land {
         let f = &mut BufReader::new(File::open(data_path.join(format!("map{world}.mul")))?);
 
         let mut result = Land {
-            blocks: Vec::with_capacity(x_blocks as usize*y_blocks as usize),
+            blocks: Vec::with_capacity(x_blocks*y_blocks),
         };
 
         for _ in 0..x_blocks {
@@ -67,7 +67,7 @@ impl Land {
         trace!("Land::read_uop");
         let f = &mut BufReader::new(File::open(data_path.join(format!("map{world}LegacyMUL.uop")))?);
         let mut result = Land {
-            blocks: Vec::with_capacity(x_blocks as usize*y_blocks as usize),
+            blocks: Vec::with_capacity(x_blocks*y_blocks),
         };
 
         let uop_header = UopHeader {

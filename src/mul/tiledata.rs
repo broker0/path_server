@@ -152,7 +152,6 @@ impl TileData {
         let f = &mut BufReader::new(f);
 
         let is7090 = file_len == 3_188_736;
-        let is7000 = file_len == 1_644_544;
 
         // the first half of the file (roughly) contains information about MulLandTile
         // 512 block of tile blocks

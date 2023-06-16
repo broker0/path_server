@@ -67,7 +67,7 @@ impl Multi {
         let mut pre7090 = true;
         let mut is7090 = true;
 
-        for i in 0..multi_idx_count {
+        for _ in 0..multi_idx_count {
             let idx = MulLookupIndexRecord {
                 offset: mul_read_u32(fi)?,
                 length: mul_read_u32(fi)?,
@@ -87,7 +87,7 @@ impl Multi {
         }
 
         let part_size = if is7090 { MULTI_PART7090_SIZE } else { MULTI_PART_SIZE };
-        let multi_tiles_count = f_size as usize / part_size;
+        let multi_tiles_count = f_size / part_size;
         let mut result = Self {
             multis: Vec::with_capacity(multi_idx_count),
             parts: Vec::with_capacity(multi_tiles_count),
