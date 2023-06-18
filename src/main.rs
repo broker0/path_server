@@ -23,34 +23,6 @@ mod http;
 mod world;
 
 
-fn run_service(data_path: &Path, ui_file: PathBuf, http_port: u16) {
-    let start = Instant::now();
-
-    info!("loading data from files, creating the world...");
-    let world_model = Arc::new(WorldModel::new(&data_path));
-    info!("the creation completed in {:?}", start.elapsed());
-
-    let (http_stop_tx, http_stop_rx) = tokio::sync::oneshot::channel::<()>();
-
-    let handle = {
-        let model = world_model.clone();
-        std::thread::spawn(move || {
-            http::http_server_service(model, ui_file, http_port, http_stop_rx);
-        })
-    };
-
-    // TODO start condition from config/command line
-    if true {
-        run_app(world_model);
-    }
-
-    info!("app stopped");
-    http_stop_tx.send(()).unwrap();
-    handle.join().unwrap();
-    info!("server stopped");
-}
-
-
 fn initialize_logging(loglevel: LevelFilter, quiet: bool, logfile: Option<&String>) {
     let term_loglevel = if quiet { LevelFilter::Off } else { loglevel };
 
@@ -67,7 +39,7 @@ fn initialize_logging(loglevel: LevelFilter, quiet: bool, logfile: Option<&Strin
 }
 
 
-fn parse_cmd_args() -> (PathBuf, PathBuf, u16) {
+fn parse_cmd_args() -> (PathBuf, PathBuf, u16, bool) {
     let matches = command!()
         .next_line_help(true)
         .arg(
@@ -111,6 +83,12 @@ fn parse_cmd_args() -> (PathBuf, PathBuf, u16) {
                 .action(ArgAction::Set)
                 .help("Sets the http server port.")
         )
+        .arg(
+            arg!(--nogui)
+                .required(false)
+                .action(ArgAction::SetTrue)
+                .help("Do not show world browser window")
+        )
         .get_matches();
 
 
@@ -150,11 +128,43 @@ fn parse_cmd_args() -> (PathBuf, PathBuf, u16) {
 
     let mul_dir = PathBuf::from(matches.get_one::<String>("data").unwrap());
     let ui_file = PathBuf::from(matches.get_one::<String>("ui").unwrap());
+    let nogui = matches.get_flag("nogui");
 
-    (mul_dir, ui_file, port)
+    (mul_dir, ui_file, port, nogui)
 }
 
+
+fn start(data_path: &Path, ui_file: PathBuf, http_port: u16, nogui: bool) {
+    let start = Instant::now();
+
+    info!("loading data from files, creating the world...");
+    let world_model = Arc::new(WorldModel::new(&data_path));
+    info!("the creation completed in {:?}", start.elapsed());
+
+    let control = http::server::run_service(world_model.clone(), ui_file, http_port);
+    match control {
+        None => {
+            error!("failed to start http server");
+            return
+        }
+
+        Some(control) => {
+            if !nogui {
+                run_app(world_model);
+                info!("app stopped");
+                control.stop_signal.send(()).unwrap();
+                control.handle.join().unwrap();
+                info!("stop");
+            } else {
+                control.handle.join().unwrap();
+            }
+
+        }
+    }
+}
+
+
 fn main() {
-    let (data_path, ui_file, http_port) = parse_cmd_args();
-    run_service(&data_path, ui_file, http_port);
+    let (data_path, ui_file, http_port, nogui) = parse_cmd_args();
+    start(&data_path, ui_file, http_port, nogui);
 }

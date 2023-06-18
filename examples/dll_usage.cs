@@ -4,28 +4,23 @@ using System.Runtime.InteropServices;
 class Program
 {
     [DllImport("path_server_lib.dll")]
-    public static extern bool start_path_server(
-        IntPtr mulPath,
-        IntPtr uiPath,
+    public static extern bool start_path_server_ex(
+        [MarshalAs(UnmanagedType.LPUTF8Str)] string dataPath,
+        [MarshalAs(UnmanagedType.LPUTF8Str)] string uiPath,
         ushort httpPort
     );
-    
+
+
     [DllImport("path_server_lib.dll")]
     public static extern void stop_path_server();    
 
     static void Main()
     {
-        string mulPath = ".";
-        string uiPath = "www/ui.html";
+        string dataPath = ".";
+        string uiFile = "www/ui.html";
         ushort httpPort = 3000;
 
-        IntPtr mulPathPtr = Marshal.StringToHGlobalAnsi(mulPath);
-        IntPtr uiPathPtr = Marshal.StringToHGlobalAnsi(uiPath);
-
-        bool result = start_path_server(mulPathPtr, uiPathPtr, httpPort);
-
-        Marshal.FreeHGlobal(mulPathPtr);
-        Marshal.FreeHGlobal(uiPathPtr);
+        bool result = start_path_server_ex(dataPath, uiFile, httpPort);
 
         if (result)
         {

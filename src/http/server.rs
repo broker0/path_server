@@ -4,10 +4,11 @@ use std::io::{Cursor};
 use std::net::SocketAddr;
 use std::path::{PathBuf};
 use std::sync::Arc;
+use std::thread::JoinHandle;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use tokio;
-use tokio::sync::oneshot::Receiver;
+use tokio::sync::oneshot::{Receiver, Sender};
 
 use hyper::{Body, Method, Request, Response, Server, StatusCode};
 use hyper::service::{make_service_fn, service_fn};
@@ -145,6 +146,22 @@ pub enum ApiResponse {
     TraceReply { points: Vec<Point>, },
     #[serde(skip_serializing, skip_deserializing)]
     RenderReply { image: ImageBuffer<Rgb<u8>, Vec<u8>> },
+}
+
+
+pub struct ServerControl {
+    pub stop_signal: Sender<()>,
+    pub handle: JoinHandle<()>,
+}
+
+
+impl ServerControl {
+    pub fn new(stop_signal: Sender<()>,  handle: JoinHandle<()>) -> Self {
+        Self {
+            stop_signal,
+            handle,
+        }
+    }
 }
 
 
@@ -464,11 +481,15 @@ async fn http_svc(model: Arc<WorldModel>, ui_file: PathBuf, http_port: u16, http
             http_stop.await.ok();
         });
 
+    // tokio::spawn(async move {
+    //     tokio::signal::ctrl_c().await.unwrap();
+    // });
+
     info!("Listening on http://{}", addr);
     if let Err(e) = server.await {
         error!("server error: {}", e);
     } else {
-        error!("server stopped successfully")
+        info!("server stopped successfully")
     }
 }
 
@@ -484,4 +505,18 @@ pub fn http_server_service(model: Arc<WorldModel>, ui_file: PathBuf, http_port: 
 
     // block thread while service is running
     rt.block_on(http_svc(model, ui_file, http_port, http_stop));
+}
+
+
+pub fn run_service(world_model: Arc<WorldModel>, ui_file: PathBuf, http_port: u16) -> Option<ServerControl> {
+    let (http_stop_tx, http_stop_rx) = tokio::sync::oneshot::channel::<()>();
+
+    let handle = {
+        let model = world_model.clone();
+        std::thread::spawn(move || {
+            http_server_service(model, ui_file, http_port, http_stop_rx);
+        })
+    };
+
+    Some(ServerControl::new(http_stop_tx, handle))
 }
