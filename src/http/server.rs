@@ -343,7 +343,7 @@ impl ApiHandler {
         let options = options.clone();
         let task = tokio::task::spawn_blocking(move || {
             let mut points = Vec::new();
-            let world = model.world(world);
+            let world = model.world(world).unwrap();
             let surv = WorldSurveyor::new(world);
             surv.trace_a_star(sx, sy, sz, 0, dx, dy, dz, 0, &mut points, &options);
             points
@@ -356,7 +356,7 @@ impl ApiHandler {
 
     async fn handle_render_area(&self, world: u8, left: Option<isize>, top: Option<isize>, right: Option<isize>, bottom: Option<isize>, color: Option<isize>, points: &Vec<Point>) -> ApiResponse {
         // TODO do rendering in a separate thread, as well as path calculation
-        let curr_world = self.world_model.world(world);
+        let curr_world = self.world_model.world(world).unwrap();
 
         let (bound_left, bound_top, bound_right, bound_bottom) = if points.len() > 0 {
             let mut left = isize::MAX;

@@ -53,7 +53,8 @@ impl MulViewer {
             return (0, 0);
         }
 
-        let surveyor = WorldSurveyor::new(self.world_model.world(self.current_world));
+        let world = self.world_model.world(self.current_world).unwrap();
+        let surveyor = WorldSurveyor::new(world);
         let (old_x, old_y) = (self.current_x, self.current_y);
 
         if dx.abs() <=1 && dy.abs() <= 1 {
@@ -121,7 +122,7 @@ impl MulViewer {
     }
 
     fn draw_area(&mut self, x_screen: i32, y_screen: i32, x_world: i32, y_world: i32, area_width: i32, area_height: i32, con: &mut Console) {
-        let world = &self.world_model.world(self.current_world);
+        let world = &self.world_model.world(self.current_world).unwrap();
         let mut tiles = Vec::with_capacity(64);
 
         for y in y_world..y_world + area_height {
@@ -213,7 +214,7 @@ impl MulViewer {
     }
 
     fn draw_tile_slice(&mut self, xc: i32, yc: i32, con: &mut Console) {
-        let world = self.world_model.world(self.current_world);
+        let world = self.world_model.world(self.current_world).unwrap();
 
         let mut tiles = Vec::with_capacity(64);
         world.query_tile_full(self.current_x, self.current_y, 0,&mut tiles);
@@ -344,10 +345,7 @@ impl Engine for MulViewer {
         }
 
         if input.key_pressed("Tab") {
-            self.current_world += 1;
-            if self.current_world > 2 {
-                self.current_world = 0;
-            }
+            self.current_world = self.world_model.next_world_idx(self.current_world);
         }
 
         None

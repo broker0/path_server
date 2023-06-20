@@ -46,7 +46,7 @@ struct WorldState {
 
 pub struct WorldModel {
     pub data: Arc<WorldData>,
-    worlds: HashMap<u8, DynamicWorld>,
+    worlds: Vec<Option<DynamicWorld>>,
 
     // TODO replace HashMap with HashSet by hashing TopLevelItem only over the serial field
     pub items_index: RwLock<HashMap<u32, TopLevelItem>>,
@@ -56,7 +56,7 @@ impl WorldModel {
     pub fn new(data_path: &Path) -> Self {
         let mut result = WorldModel {
             data: Arc::new(WorldData::new(data_path)),
-            worlds: HashMap::new(),
+            worlds: Vec::new(),
 
             items_index: RwLock::new(HashMap::new()),
         };
@@ -65,10 +65,11 @@ impl WorldModel {
         for (world, w,h) in world_specs {
             match StaticWorld::probe(data_path, world, w, h) {
                 Some((w, h)) => {
-                    result.worlds.insert(world, DynamicWorld::new(data_path, result.data.clone(), world, w, h));
+                    result.worlds.push(Some(DynamicWorld::new(data_path, result.data.clone(), world, w, h)));
                     debug!("world {world} is loaded");
                 }
                 None => {
+                    result.worlds.push(None);
                     debug!("No files found for world {world}")
                 }
             }
@@ -78,12 +79,20 @@ impl WorldModel {
     }
 
 
-    pub fn world(&self, n: u8) -> &DynamicWorld {
-        let world = self.worlds.get(&n);
-        match world {
-            Some(world) => world,
-            None => unreachable!(),
+    pub fn next_world_idx(&self, idx: u8) -> u8 {
+        let len = self.worlds.len() as u8;
+        for i in (idx+1..len).chain(0..idx+1) {
+            if self.worlds[i as usize].is_some() {
+                return i;
+            }
         }
+
+        idx
+    }
+
+
+    pub fn world(&self, n: u8) -> Option<&DynamicWorld> {
+        self.worlds.get(n as usize).and_then(Option::as_ref)
     }
 
 
@@ -147,7 +156,7 @@ impl WorldModel {
         let item = index.get(&serial);
 
         if let Some(&TopLevelItem{ world, x, y, z, serial, graphic, .. }) = item {
-            let world = self.world(world);
+            let world = self.world(world).unwrap();
             world.delete_item(x, y, z, serial, graphic);
             index.remove(&serial);
         }
@@ -161,11 +170,11 @@ impl WorldModel {
         // delete old item
         let old = index.remove(&item.serial);
         if let Some(TopLevelItem{ world, x, y, z, serial, graphic , .. }) = old {
-            let world_model = self.world(world);
+            let world_model = self.world(world).unwrap();
             world_model.delete_item(x, y, z, serial, graphic);
         }
 
-        let world_model = self.world(item.world);
+        let world_model = self.world(item.world).unwrap();
         world_model.insert_item(item.x, item.y, item.z, item.serial, item.graphic, );
 
         // insert new
@@ -180,7 +189,7 @@ impl WorldModel {
         // try delete main item from index
         let old = index.remove(&item.serial);
         if let Some(TopLevelItem{ world, x, y, z, serial, graphic, .. }) = old {
-            let world_model = self.world(world);
+            let world_model = self.world(world).unwrap();
             world_model.delete_item(x, y, z, serial, graphic);
         }
 
@@ -191,7 +200,7 @@ impl WorldModel {
         }
 
         // insert multi-parts to the world
-        let world_model = self.world(item.world);
+        let world_model = self.world(item.world).unwrap();
         world_model.insert_item(item.x, item.y, item.z, item.serial, item.graphic);
 
         index.insert(item.serial, item);    // insert main item to index
@@ -199,7 +208,7 @@ impl WorldModel {
 
 
     pub fn query(&self, world: u8, left: isize, top: isize, right: isize, bottom: isize, items: &mut Vec<Item>) {
-        let d_world = self.world(world);
+        let d_world = self.world(world).unwrap();
 
         let s = Instant::now();
         d_world.query_area_dynamic(world, left, top, right, bottom, items);

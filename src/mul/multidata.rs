@@ -82,7 +82,7 @@ impl Multi {
             }
         }
 
-        if pre7090 && is7090 || (!pre7090 && !is7090){
+        if pre7090 == is7090  {
             panic!("unable to determine version of multi.mul");
         }
 
