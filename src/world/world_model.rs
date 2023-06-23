@@ -64,10 +64,11 @@ impl WorldModel {
         let world_specs = [(0, 768, 512), (1, 768, 512), (2, 288, 200), (3, 320, 256), (4, 181, 181), (5, 160, 512)];
         for (world, w,h) in world_specs {
             match StaticWorld::probe(data_path, world, w, h) {
-                Some((w, h)) => {
-                    result.worlds.push(Some(DynamicWorld::new(data_path, result.data.clone(), world, w, h)));
+                Some((use_mul, w, h)) => {
+                    result.worlds.push(Some(DynamicWorld::new(data_path, result.data.clone(), world, use_mul, w, h)));
                     debug!("world {world} is loaded");
                 }
+
                 None => {
                     result.worlds.push(None);
                     debug!("No files found for world {world}")

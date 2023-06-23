@@ -1,7 +1,7 @@
 use std::collections::hash_map::Entry;
 use std::fs;
 use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
-use log::warn;
+use log::{debug, warn};
 use crate::*;
 use crate::http::server::Item;
 use crate::mapdata::LandBlock;
@@ -21,13 +21,11 @@ pub struct StaticWorld {
 }
 
 impl StaticWorld {
-    pub fn read(data_path: &Path, world: u8, width_blocks: usize, height_blocks: usize) -> Self {
-        let land = Land::read(data_path, world, width_blocks, height_blocks);
-        let land = if land.is_ok() {
-            land.unwrap()
+    pub fn read(data_path: &Path, world: u8, use_mul: bool, width_blocks: usize, height_blocks: usize) -> Self {
+        let land = if use_mul {
+            Land::read_mul(data_path, world, width_blocks, height_blocks).unwrap()
         } else {
-            warn!("error while reading MUL file for world {world}, trying to read UOP file");
-            Land::read_uop(data_path, world,width_blocks, height_blocks).unwrap()
+            Land::read_uop(data_path, world, width_blocks, height_blocks).unwrap()
         };
 
         Self {
@@ -38,12 +36,23 @@ impl StaticWorld {
         }
     }
 
-    pub fn probe(data_path: &Path, world: u8, width: usize, height: usize) -> Option<(usize, usize)> {
+    /// checks for the existence of data files and returns the type and dimensions of the world.
+    /// true means old format MUL, false means new format UOP.
+    pub fn probe(data_path: &Path, world: u8, width: usize, height: usize) -> Option<(bool, usize, usize)> {
         match fs::metadata(data_path.join(format!("map{world}.mul"))) {
-            Ok(_) => Some((width, height)),
+            Ok(_) => {
+                let width = Land::calc_mul_width(data_path, world, height);
+                debug!("found MUL file for world {world} with size {width}x{height} blocks");
+                Some((true, width, height))
+            },
+
             Err(_) => {
                 match fs::metadata(data_path.join(format!("map{world}LegacyMUL.uop"))) {
-                    Ok(_) => Some((width, height)),
+                    Ok(_) => {
+                        let width = Land::calc_uop_width(data_path, world, height);
+                        debug!("found UOP file for world {world} with size {width}x{height} blocks");
+                        Some((false, width, height))
+                    },
                     Err(_) => None,
                 }
             }
@@ -167,10 +176,10 @@ pub struct DynamicWorld {
 
 
 impl DynamicWorld {
-    pub fn new(data_path: &Path, world_data: Arc<WorldData>, world: u8, width_blocks: usize, height_blocks: usize) -> Self {
+    pub fn new(data_path: &Path, world_data: Arc<WorldData>, world: u8, use_mul: bool, width_blocks: usize, height_blocks: usize) -> Self {
         let result = DynamicWorld {
             data: world_data,
-            base: StaticWorld::read(data_path, world, width_blocks, height_blocks),
+            base: StaticWorld::read(data_path, world, use_mul, width_blocks, height_blocks),
             overlay_blocks: RwLock::new(HashMap::new()),
         };
 
