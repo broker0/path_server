@@ -116,11 +116,14 @@ impl WorldModel {
 
 
     pub fn load_state(&self, file_name: &str) {
+        let start_time = Instant::now();
+
         let mut file = File::open(file_name).unwrap();
         let mut state = String::new();
         file.read_to_string(&mut state).unwrap();   // count of bytes readed
 
         let ws: WorldState = serde_json::from_str(&state).unwrap();
+        debug!("world state with {} items and {} custom multis is loading...", ws.items_index.len(), ws.custom_multis.len());
         self.clear_state();
 
         {
@@ -131,6 +134,8 @@ impl WorldModel {
         for (_, item) in ws.items_index {
             self.insert_item(item);
         }
+
+        debug!("world state loaded in {:?}", start_time.elapsed());
     }
 
 

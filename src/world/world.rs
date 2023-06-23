@@ -1,7 +1,7 @@
 use std::collections::hash_map::Entry;
 use std::fs;
 use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
-use log::{debug, warn};
+use log::{debug, trace, warn};
 use crate::*;
 use crate::http::server::Item;
 use crate::mapdata::LandBlock;
@@ -267,7 +267,7 @@ impl DynamicWorld {
             let multi_parts = custom_multis.get(&serial);
 
             if let Some(multi_parts) = multi_parts {
-                info!("found parts for multi-object {serial}");
+                trace!("found parts for multi-object {serial}");
 
                 for (counter, part)  in multi_parts.iter().enumerate() {
                     insert(overlay, part.x, part.y, part.z, part.graphic, serial, counter as u16);
@@ -306,7 +306,7 @@ impl DynamicWorld {
             let custom_multis = self.data.custom_multis.read().unwrap();
             let multi_parts = custom_multis.get(&serial);
             if let Some(multi_parts) = multi_parts {
-                info!("found parts for multi-object {serial}");
+                trace!("found parts for multi-object {serial}");
 
                 for (counter, part) in multi_parts.iter().enumerate() {
                     let x = part.x;
