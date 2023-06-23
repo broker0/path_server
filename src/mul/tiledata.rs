@@ -185,8 +185,6 @@ impl TileData {
         let group_size = if is7090 { STATIC_TILE_GROUP7090_SIZE as u64 } else { STATIC_TILE_GROUP_SIZE as u64 };
         let static_objects =  (left_bytes / group_size) * 32;
 
-        // println!("{static_objects} static objects in tiledata {left_bytes}");
-
         for i in 0..static_objects {
             if i & 0x1F == 0 {
                 let _header = mul_read_u32(f)?;   // unknown _header
@@ -206,9 +204,6 @@ impl TileData {
                 height: mul_read_u8(f)?,
                 tile_name: mul_read_fixed_str20(f)?,
             };
-
-            // println!("{}",  std::str::from_utf8(&tile_name).unwrap());
-            // println!("Static tile flags {:032b}", tile.flags);
 
             result.static_tiles.push(StaticTileData {flags: tile.flags, height: tile.height});
         }

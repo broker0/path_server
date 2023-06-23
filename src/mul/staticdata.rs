@@ -123,7 +123,6 @@ impl Static {
                     });
 
                     // n = offset + length;
-                    // println!("{}: {} {} {:032b}", i, o/STATIC_TILE_SIZE as u32, l/STATIC_TILE_SIZE as u32, u);
                     Some(MulSlice(index, count))
                 } else {
                     // miss_counter += 1;
@@ -135,9 +134,6 @@ impl Static {
                 // i += 1;
             }
         }
-
-        // println!("Blocks in vector {}", result.blocks.len());
-        // println!("Blocks with missed statics - {miss_counter}/{i}");
 
         Ok(result)
     }
