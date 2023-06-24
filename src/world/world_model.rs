@@ -140,15 +140,15 @@ impl WorldModel {
 
 
     pub fn clear_state(&self) {
-        let mut items = HashMap::new();
+        let mut items = Vec::new();
         {   // we must drop ReadGuard before delete items
             let index = self.items_index.read().unwrap();
-            for (&key, &TopLevelItem{ world, x, y, z, serial, graphic, timestamp: last_updated }) in index.iter() {
-                items.insert(key, TopLevelItem{ world, x, y, z, serial, graphic, timestamp: last_updated });
+            for (_, &TopLevelItem{ serial, .. }) in index.iter() {
+                items.push(serial);
             }
         }
 
-        for (_, TopLevelItem{ serial, .. }) in &items {
+        for serial in &items {
             self.delete_item(*serial);
         }
 
