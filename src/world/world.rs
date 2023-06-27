@@ -368,7 +368,7 @@ impl DynamicWorld {
     }
 
     /// returns a `WorldTile` structure for the map tile, given the direction of travel.
-    pub fn query_tile_ground(&self, x: isize, y: isize, direction: u8) -> WorldTile {
+    pub fn query_tile_ground(&self, x: isize, y: isize, direction: u8, walkable: u32) -> WorldTile {
         let (idx, (ox, oy)) = self.base.tile_to_block_offsets(x, y);
         let tiledata = &self.data.tiledata;
 
@@ -379,7 +379,7 @@ impl DynamicWorld {
         let z_top = if z_exit > z_stand { z_exit } else { z_stand };
 
         let tile = TileType::MapTile(map_tile.land_tile);
-        let shape = TileShape::from_land_tile(z_base, z_stand, z_top, tile.num(), tiledata.get_land_tile(tile.num()));
+        let shape = TileShape::from_land_tile(z_base, z_stand, z_top, tile.num(), tiledata.get_land_tile(tile.num()), walkable);
 
         WorldTile {
             tile,
@@ -388,7 +388,7 @@ impl DynamicWorld {
     }
 
     /// adds to `result` all static objects located in the specified tile
-    pub fn query_tile_static(&self, x: isize, y: isize, result: &mut Vec<WorldTile>) {
+    pub fn query_tile_static(&self, x: isize, y: isize, walkable: u32, ignore: u32, result: &mut Vec<WorldTile>) {
         let (idx, (ox, oy)) = self.base.tile_to_block_offsets(x, y);
         let tiledata = &self.data.tiledata;
 
@@ -396,14 +396,14 @@ impl DynamicWorld {
         for static_tile in statics {
             let obj = WorldTile {
                 tile: TileType::ObjectTile(static_tile.static_tile),
-                shape: TileShape::from_static_tile(static_tile.z, tiledata.get_static_tile(static_tile.static_tile)),
+                shape: TileShape::from_static_tile(static_tile.z, tiledata.get_static_tile(static_tile.static_tile), walkable, ignore),
             };
             result.push(obj);
         }
     }
 
     /// adds to `result` all dynamic (game) objects located in the specified tile
-    pub fn query_tile_dynamic(&self, x: isize, y: isize, result: &mut Vec<WorldTile>) {
+    pub fn query_tile_dynamic(&self, x: isize, y: isize, walkable: u32, ignore: u32, result: &mut Vec<WorldTile>) {
         let (idx, (_ox, _oy)) = self.base.tile_to_block_offsets(x, y);
         let tiledata = &self.data.tiledata;
 
@@ -421,7 +421,7 @@ impl DynamicWorld {
                         }
                         let obj = WorldTile {
                             tile: TileType::ObjectTile(*tile as u16),
-                            shape: TileShape::from_static_tile(*z, tiledata.get_static_tile(*tile as u16)),
+                            shape: TileShape::from_static_tile(*z, tiledata.get_static_tile(*tile as u16), walkable, ignore),
                         };
                         result.push(obj);
                     }
@@ -431,92 +431,23 @@ impl DynamicWorld {
         }
     }
 
-    /// WIP
-    pub fn query_tile_dynamic_top(&self, x: isize, y: isize) -> Option<WorldTile> {
-        let (idx, (_ox, _oy)) = self.base.tile_to_block_offsets(x, y);
-        let tiledata = &self.data.tiledata;
-
-        let overlay = self.read_overlay();
-        if let Some(block) = overlay.get(&idx) {
-            let min_item = DynamicWorldObject::min_item(x, y);
-            let max_item = DynamicWorldObject::max_item(x, y);
-            let r = block.range(min_item..=max_item).last();
-
-            if let Some(r) = r {
-                let (z, tile) = match r {
-                    DynamicWorldObject::MultiPart { z, tile, .. } => (z, tile),
-                    DynamicWorldObject::GameObject { z, graphic: tile, .. } => (z, tile),
-                };
-
-                let static_tile = tiledata.get_static_tile(*tile as u16);
-
-                Some( WorldTile {
-                    tile: TileType::ObjectTile(*tile as u16),
-                    shape: TileShape::from_static_tile(*z, static_tile),
-                })
-
-            } else {
-                None
-            }
-        } else {
-            None
-        }
-    }
-
 
     /// adds to `result` all objects in the given tile, and sorts them by z and height
     /// in fact it just calls query_tile_ground, query_tile_static and query_tile_dynamic and sorts `result`
-    pub fn query_tile_full(&self, x: isize, y: isize, direction: u8, result: &mut Vec<WorldTile>) {
-        result.push(self.query_tile_ground(x, y, direction));
-        self.query_tile_static(x, y, result);
-        self.query_tile_dynamic(x, y, result);
+    pub fn query_tile_full(&self, x: isize, y: isize, direction: u8, walkable: u32, ignore: u32, result: &mut Vec<WorldTile>) {
+        result.push(self.query_tile_ground(x, y, direction, walkable));
+        self.query_tile_static(x, y, walkable, ignore, result);
+        self.query_tile_dynamic(x, y, walkable, ignore, result);
 
         result.sort_by(|a,b| {
-            a.z_base()
-                .cmp(&b.z_base())
-                .then(a.z_top().cmp(&b.z_top()))
+            a.z_top()
+                .cmp(&b.z_top())
+                .then(a.z_base().cmp(&b.z_base()))
+            // a.z_base()
+            //     .cmp(&b.z_base())
+            //     .then(a.z_top().cmp(&b.z_top()))
         })
     }
-
-    /// WIP
-    pub fn query_top_tile(&self, x: isize, y: isize) -> WorldTile {
-        let tiledata = &self.data.tiledata;
-
-        let (idx, (ox, oy)) = self.base.tile_to_block_offsets(x, y);
-        let ground_tile = self.query_tile_ground(x, y, 0);
-
-
-        let statics = self.base.statics.statics_block_tile(idx, ox as u8, oy as u8);
-        let static_tile = statics.last();
-
-        let dynamic_tile = self.query_tile_dynamic_top(x, y);
-
-        let mut tiles: [Option<WorldTile>; 3] = [Some(ground_tile), None, dynamic_tile];
-
-
-        if static_tile.is_some() {
-            let static_tile = static_tile.unwrap();
-            tiles[1] = Some(WorldTile {
-                tile: TileType::ObjectTile(static_tile.static_tile),
-                shape: TileShape::from_static_tile(static_tile.z, tiledata.get_static_tile(static_tile.static_tile)),
-            });
-        }
-
-        tiles.sort_by(|a,b|{
-            let z1 = match a {
-                None => -127,
-                Some(wt) => wt.z_top(),
-            };
-            let z2 = match b {
-                None => -127,
-                Some(wt) => wt.z_top(),
-            };
-            z1.cmp(&z2)
-        });
-
-        tiles[2].unwrap()
-    }
-
 
     /// searches for game objects in the specified area. Parts of multi-objects are ignored
     pub fn query_area_dynamic(&self, world: u8, left: isize, top: isize, right: isize, bottom: isize, result: &mut Vec<Item>) {

@@ -39,6 +39,9 @@ impl PartialOrd for ScoredPosition {
 
 pub struct WorldSurveyor<'a> {
     pub model: &'a DynamicWorld,
+    walkable: u32,
+    ignore: u32,
+    fly: bool,
 }
 
 
@@ -47,12 +50,15 @@ impl<'a> WorldSurveyor<'a> {
     pub fn new(model: &'a DynamicWorld) -> Self {
         Self {
             model,
+            walkable: 0,
+            ignore: 0,
+            fly: false,
         }
     }
 
     /// returns a vector of elements located at the given coordinates and used in movement testing
     pub fn get_tile_objects(&self, x: isize, y: isize, direction: u8, result: &mut Vec<WorldTile>) {
-        self.model.query_tile_full(x, y, direction, result);
+        self.model.query_tile_full(x, y, direction, self.walkable, self.ignore, result);
     }
 
     fn get_top_cover(&self, x: isize, y: isize, z: i8) {
@@ -72,7 +78,10 @@ impl<'a> WorldSurveyor<'a> {
             let (z_base, z_stand, z_top, slope) = match tile.shape {
                 TileShape::Surface { z_base, z_stand, .. } =>  (z_base, z_stand, z_stand, false),
                 TileShape::Slope { z_base, z_stand, z_top, .. } => (z_base, z_stand, z_top, true),
+
+                TileShape::HoverOver { .. } |
                 TileShape::Background { .. } => continue,
+
             };
 
             // if the surface is lower than our position and higher than
@@ -112,12 +121,19 @@ impl<'a> WorldSurveyor<'a> {
             let (upper_obj_z_base, upper_obj_z_stand) = match upper_obj.shape {
                 TileShape::Slope { z_base, z_stand, .. } => (z_base as i16, z_stand as i16),
                 TileShape::Surface { z_base, z_stand, .. } => (z_base as i16, z_stand as i16),
+                TileShape::HoverOver { z_base } => {
+                    if !self.fly { continue };
+                    (z_base as i16, z_base as i16)
+                },
                 TileShape::Background { .. } => continue,
             };
 
-            // if z_low > z_high {  // is this correct?
-            //     break
-            // }
+            // if there is a tile with the HoverOver flag within reach, we immediately stand on it and fly.
+            if upper_obj.is_hover_over() {
+                if (upper_obj_z_stand - z as i16).abs() <= 25 {
+                    return Some(if upper_obj_z_stand != -128 {upper_obj_z_stand as i8} else {current_z as i8})
+                }
+            }
 
             const CHARACTER_HEIGHT: i16 = 16;
             // character can fit between upper_obj_z_base and z_low
@@ -127,6 +143,10 @@ impl<'a> WorldSurveyor<'a> {
                     let (bottom_obj_z_stand, passable) = match bottom_obj.shape {
                         TileShape::Slope { z_stand, passable,.. }   => (z_stand as i16, passable),
                         TileShape::Surface { z_stand, passable, .. } => (z_stand as i16, passable),
+                        TileShape::HoverOver { z_base } => {
+                            if !self.fly { continue }
+                            (z_base as i16, true)
+                        }
                         TileShape::Background { .. } => continue,
                     };
 
@@ -141,6 +161,7 @@ impl<'a> WorldSurveyor<'a> {
                         if !match bottom_obj.shape {
                             TileShape::Slope { z_base, .. }   => z_base as i16 <= z_high,
                             TileShape::Surface { z_stand, .. } => z_stand as i16 <= z_high,
+                            TileShape::HoverOver { z_base, .. } => z_base as i16 <= z_high,
                             TileShape::Background { .. } => unreachable!(),
                         } {
                             continue

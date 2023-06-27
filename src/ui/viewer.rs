@@ -105,7 +105,7 @@ impl MulViewer {
         // TODO move to `test_step`?
         self.max_z = 127;
         let world = surveyor.model;
-        self.ground_z = world.query_tile_ground(self.current_x, self.current_y, 0).z_base();
+        self.ground_z = world.query_tile_ground(self.current_x, self.current_y, 0, 0).z_base();
 
         let mut tiles = Vec::with_capacity(16);
         surveyor.get_tile_objects(self.current_x, self.current_y, self.current_direction, &mut tiles);
@@ -123,12 +123,13 @@ impl MulViewer {
 
     fn draw_area(&mut self, x_screen: i32, y_screen: i32, x_world: i32, y_world: i32, area_width: i32, area_height: i32, con: &mut Console) {
         let world = &self.world_model.world(self.current_world).unwrap();
+        let surveyor = WorldSurveyor::new(world);
         let mut tiles = Vec::with_capacity(64);
 
         for y in y_world..y_world + area_height {
             for x in x_world..x_world + area_width {
                 tiles.clear();
-                world.query_tile_full(x as isize, y as isize, 0, &mut tiles);
+                surveyor.get_tile_objects(x as isize, y as isize, 0, &mut tiles);
 
 
                 if tiles.len() != 0 {
@@ -215,9 +216,10 @@ impl MulViewer {
 
     fn draw_tile_slice(&mut self, xc: i32, yc: i32, con: &mut Console) {
         let world = self.world_model.world(self.current_world).unwrap();
+        let surveyor = WorldSurveyor::new(world);
 
         let mut tiles = Vec::with_capacity(64);
-        world.query_tile_full(self.current_x, self.current_y, 0,&mut tiles);
+        surveyor.get_tile_objects(self.current_x, self.current_y, self.current_direction, &mut tiles);
 
         let mut dy = 0;
         let cnt = tiles.len() as i32;

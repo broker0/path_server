@@ -397,6 +397,7 @@ impl ApiHandler {
 
         let mut tiles = Vec::new();
         let mut image = ImageBuffer::new(width as u32, height as u32);
+        let surveyor = WorldSurveyor::new(curr_world);
 
         // draw map
         for x in left..right {
@@ -405,7 +406,7 @@ impl ApiHandler {
                 let py = (y - top) as u32;
 
                 tiles.clear();
-                curr_world.query_tile_full(x, y, 0, &mut tiles);
+                surveyor.get_tile_objects(x, y, 0, &mut tiles);
                 let top_tile = tiles.last().unwrap();
                 let color = curr_world.world_tile_color(&top_tile);
 

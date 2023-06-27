@@ -1,6 +1,6 @@
 import ctypes
 
-dll = ctypes.WinDLL ("./path_server_lib.dll")
+dll = ctypes.WinDLL("./path_server_lib.dll")
 
 dll.start_path_server_ex.argtypes = (ctypes.c_char_p, ctypes.c_char_p, ctypes.c_uint16)
 dll.start_path_server_ex.restype = ctypes.c_bool

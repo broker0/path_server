@@ -115,29 +115,45 @@ impl TileType {
 #[derive(Copy, Clone)]
 pub enum TileShape {
     Slope {z_base: i8, z_stand:i8, z_top: i8, passable: bool, },
-    Surface {z_base: i8, z_stand: i8, passable: bool,},
+    Surface {z_base: i8, z_stand: i8, passable: bool, },
+    HoverOver {z_base: i8, },
     Background {z_base: i8, z_top: i8, },
 }
 
 
 impl TileShape {
-    pub fn from_static_tile(z: i8, static_tile: &StaticTileData) -> Self {
-        let passable = static_tile.flags & MulTileFlags::Impassable as u32 == 0;
+
+    pub fn from_static_tile(z: i8, static_tile: &StaticTileData, walkable: u32, ignore: u32) -> Self {
+        let mut passable = static_tile.flags & MulTileFlags::Impassable as u32 == 0;
 
         let z_base = z;
         let height = static_tile.height as i8;
         let z_top = z_base.saturating_add(height);  // Might be worth switching to 16bit z, at least internally?
 
-        if static_tile.flags & (MulTileFlags::Impassable as u32 | MulTileFlags::Surface as u32) == 0 {
+        // HoverOver flag is used for Gargoyle Flight Paths
+        // there are only 3 tiles in standard tiledata with this flag and they all have a height of 0
+        // that's why i use only one coordinate
+        if (static_tile.flags & (MulTileFlags::HoverOver as u32)) != 0 {
+            return Self::hover_over(z_base)
+        }
+
+        // this tile does not affect the movement in any way,
+        // since it is not blocking and at the same time it is not a surface that can be walked on
+        if (static_tile.flags & (MulTileFlags::Impassable as u32 | MulTileFlags::Surface as u32 | walkable)) == 0 {
             return Self::background(z_base, z_top)
         };
 
-        // TODO remove hack to walk through doors
-        if static_tile.flags & MulTileFlags::Door as u32 != 0 {
+        // although this tile can affect the movement, we will assume that it does not exist at all
+        if (static_tile.flags & ignore) != 0 {
             return Self::background(z_base, z_top)
         };
 
-        if static_tile.flags & MulTileFlags::Bridge as u32 == 0 {
+        // if `walkable` and tile has same flags, consider this tile to be walkable
+        if static_tile.flags & walkable != 0 {
+            passable = true;
+        }
+
+        if (static_tile.flags & MulTileFlags::Bridge as u32) == 0 {
             let z_stand = z_top;
             Self::flat(z_base, z_stand, passable)
         } else {
@@ -146,11 +162,17 @@ impl TileShape {
         }
     }
 
-    pub fn from_land_tile(z_base: i8, z_stand: i8, z_top: i8, tile: u16, land_tile: &LandTileData) -> Self {
-        let passable = land_tile.flags & MulTileFlags::Impassable as u32 == 0;
+    pub fn from_land_tile(z_base: i8, z_stand: i8, z_top: i8, tile: u16, land_tile: &LandTileData, walkable: u32) -> Self {
+        let mut passable = (land_tile.flags & MulTileFlags::Impassable as u32) == 0;
 
+        // special land tiles, which, as it were, do not exist
         if tile == 0x0002 || tile == 0x01DB || (tile >= 0x01AE && tile <= 0x01B5)  {
             return Self::background(z_base, z_top);
+        }
+
+        // if `walkable` and tile has same flags, consider this tile to be walkable
+        if land_tile.flags & walkable != 0 {
+            passable = true;
         }
 
         if z_base == z_stand && z_stand == z_top {
@@ -168,6 +190,11 @@ impl TileShape {
     #[inline]
     pub fn slope(z_base: i8, z_stand: i8, z_top: i8, passable: bool) -> Self {
         Self::Slope { z_base, z_stand, z_top, passable }
+    }
+
+    #[inline]
+    pub fn hover_over(z_base: i8) -> Self {
+        Self::HoverOver { z_base }
     }
 
     #[inline]
@@ -201,6 +228,7 @@ impl WorldTile {
         match self.shape {
             TileShape::Slope { z_base, .. } |
             TileShape::Surface { z_base, .. } |
+            TileShape::HoverOver { z_base, .. } |
             TileShape::Background { z_base, .. } => z_base
         }
     }
@@ -212,6 +240,7 @@ impl WorldTile {
         match self.shape {
             TileShape::Slope { z_stand, passable: true, .. } => z_stand,
             TileShape::Surface { z_stand, passable: true, .. } => z_stand,
+            TileShape::HoverOver { z_base, ..} => z_base,
             _ => panic!("z_stand called for invalid tile type"),
         }
     }
@@ -222,7 +251,8 @@ impl WorldTile {
         match self.shape {
             TileShape::Slope { z_top, .. } |
             TileShape::Surface { z_stand: z_top, .. } |
-            TileShape::Background { z_top, .. } => z_top
+            TileShape::Background { z_top, .. } |
+            TileShape::HoverOver { z_base: z_top, ..} => z_top,
         }
     }
 
@@ -238,6 +268,14 @@ impl WorldTile {
     pub fn is_land(&self) -> bool {
         match self.tile {
             TileType::MapTile(_) => true,
+            _ => false,
+        }
+    }
+
+    #[inline]
+    pub fn is_hover_over(&self) -> bool {
+        match self.shape {
+            TileShape::HoverOver { .. } => true,
             _ => false,
         }
     }
