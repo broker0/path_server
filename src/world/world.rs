@@ -431,6 +431,25 @@ impl DynamicWorld {
         }
     }
 
+    pub fn is_tile_multi_occupied(&self, x: isize, y: isize) -> bool {
+        let (idx, (_ox, _oy)) = self.base.tile_to_block_offsets(x, y);
+
+        let overlay = self.read_overlay();
+        if let Some(block) = overlay.get(&idx) {
+            let min_item = DynamicWorldObject::min_item(x, y);
+            let max_item = DynamicWorldObject::max_item(x, y);
+
+            for item in block.range(min_item..=max_item) {
+                match item {
+                    DynamicWorldObject::MultiPart { .. } => return true,
+                    _ => continue
+                }
+            }
+        }
+
+        false
+    }
+
 
     /// adds to `result` all objects in the given tile, and sorts them by z and height
     /// in fact it just calls query_tile_ground, query_tile_static and query_tile_dynamic and sorts `result`

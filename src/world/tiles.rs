@@ -240,7 +240,7 @@ impl WorldTile {
         match self.shape {
             TileShape::Slope { z_stand, passable: true, .. } => z_stand,
             TileShape::Surface { z_stand, passable: true, .. } => z_stand,
-            TileShape::HoverOver { z_base, ..} => z_base,
+            TileShape::HoverOver { z_base, .. } => z_base,
             _ => panic!("z_stand called for invalid tile type"),
         }
     }

@@ -18,6 +18,7 @@ use serde::{Deserialize, Serialize};
 use image::{ImageBuffer, Rgb};
 use log::{error, info};
 
+use crate::mul::tiledata::MulTileFlags;
 use crate::world::{WorldModel, WorldSurveyor};
 use crate::world::tiles::TopLevelItem;
 
@@ -28,6 +29,29 @@ pub enum DistanceFunc {
     Chebyshev,
     Diagonal,
     Euclidean,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
+pub enum TileFlags {
+    Impassable,
+    Surface,
+    Wet,
+    HoverOver,
+    Door,
+    Wall,
+}
+
+impl TileFlags {
+    pub fn to_mul_flags(&self) -> u32 {
+        match self {
+            TileFlags::Impassable => MulTileFlags::Impassable as u32,
+            TileFlags::Surface => MulTileFlags::Surface as u32,
+            TileFlags::Wet => MulTileFlags::Wet as u32,
+            TileFlags::HoverOver => MulTileFlags::HoverOver as u32,
+            TileFlags::Door => MulTileFlags::Door as u32,
+            TileFlags::Wall => MulTileFlags::Wall as u32,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -41,15 +65,18 @@ pub struct TraceOptions {
     pub accuracy_x: Option<isize>,
     pub accuracy_y: Option<isize>,
     pub accuracy_z: Option<isize>,
+     // extended passability checking flags
+    pub flags_walk: Option<Vec<TileFlags>>,
+    pub flags_ignore: Option<Vec<TileFlags>>,
     // misc
     pub all_points: Option<bool>,
-    pub open_doors: Option<bool>,
     pub allow_diagonal_move: Option<bool>,
-    pub cost_limit: Option<isize>,
     // movement cost
+    pub cost_limit: Option<isize>,
     pub cost_turn: Option<isize>,
     pub cost_move_straight: Option<isize>,
     pub cost_move_diagonal: Option<isize>,
+    pub cost_move_multi: Option<isize>,
     // heuristic
     pub heuristic_distance: Option<DistanceFunc>,
     pub heuristic_straight: Option<isize>,
@@ -64,19 +91,26 @@ impl TraceOptions {
             top: None,
             right: None,
             bottom: None,
+
             accuracy_x: None,
             accuracy_y: None,
             accuracy_z: None,
-            open_doors: None,
+
+            flags_walk: None,
+            flags_ignore: None,
+
+            all_points: None,
+            allow_diagonal_move: None,
+
             cost_limit: None,
             cost_turn: None,
             cost_move_straight: None,
             cost_move_diagonal: None,
-            allow_diagonal_move: None,
+            cost_move_multi: None,
+
             heuristic_distance: None,
             heuristic_straight: None,
             heuristic_diagonal: None,
-            all_points: None,
         }
     }
 }
@@ -341,10 +375,17 @@ impl ApiHandler {
         let model = self.world_model.clone();
 
         let options = options.clone();
+        let walkable = options.flags_walk.clone().unwrap_or(vec![]);
+        let ignore = options.flags_ignore .clone().unwrap_or(vec![]);
         let task = tokio::task::spawn_blocking(move || {
             let mut points = Vec::new();
             let world = model.world(world).unwrap();
-            let surv = WorldSurveyor::new(world);
+            let surv = if walkable.len() == 0 && ignore.len() == 0 {
+                WorldSurveyor::new(world)
+            } else {
+                WorldSurveyor::new_with_flags(world, walkable, ignore)
+            };
+
             surv.trace_a_star(sx, sy, sz, 0, dx, dy, dz, 0, &mut points, &options);
             points
         });

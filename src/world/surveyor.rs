@@ -4,7 +4,8 @@ use std::collections::hash_map::{Entry};
 use std::time::Instant;
 use log::{debug, info, warn};
 
-use crate::http::server::{DistanceFunc, Point, TraceOptions};
+use crate::http::server::{DistanceFunc, Point, TileFlags, TraceOptions};
+use crate::mul::tiledata::MulTileFlags;
 use crate::world::{DynamicWorld, TileShape, WorldTile};
 
 
@@ -53,6 +54,25 @@ impl<'a> WorldSurveyor<'a> {
             walkable: 0,
             ignore: 0,
             fly: false,
+        }
+    }
+
+    pub fn new_with_flags(model: &'a DynamicWorld, walkable_flags: Vec<TileFlags>, ignore_flags: Vec<TileFlags>) -> Self {
+        let mut walkable = 0;
+        let mut ignore = 0;
+        for flag in walkable_flags {
+            walkable |= flag.to_mul_flags();
+        }
+
+        for flag in ignore_flags {
+            ignore |= flag.to_mul_flags();
+        }
+
+        Self {
+            model,
+            walkable,
+            ignore,
+            fly: walkable & MulTileFlags::HoverOver as u32 != 0
         }
     }
 
@@ -284,6 +304,7 @@ impl<'a> WorldSurveyor<'a> {
         let y_accuracy = options.accuracy_y.unwrap_or(0);
         let z_accuracy = options.accuracy_z.unwrap_or(0);
 
+        let cost_move_multi = options.cost_move_multi.unwrap_or(0);
         let cost_limit = options.cost_limit.unwrap_or(isize::MAX);
         let cost_turn = options.cost_turn.unwrap_or(1);
         let cost_move_straight = options.cost_move_straight.unwrap_or(1);
@@ -419,6 +440,12 @@ impl<'a> WorldSurveyor<'a> {
                         if direction == curr_dir { cost_move_diagonal } else { cost_move_diagonal + cost_turn }
                     } else {
                         if direction == curr_dir { cost_move_straight } else { cost_move_straight + cost_turn }
+                    };
+
+                    let dest_gval = if cost_move_multi > 0 && self.model.is_tile_multi_occupied(dest_x, dest_y) {
+                        dest_gval + cost_move_multi
+                    } else {
+                        dest_gval
                     };
 
                     if dest_gval > cost_limit {
