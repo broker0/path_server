@@ -116,23 +116,52 @@ All fields are optional and allow you to change the default settings.
 {
     "left": isize, "top": isize, "right": isize, "bottom": isize,
     "accuracy_x": isize, "accuracy_y": isize, "accuracy_z": isize,
-    "cost_turn": isize, "cost_move_straight": isize, "cost_move_diagonal": isize,
+    "flags_walk": [flag, ...], "flags_ignore": [flag, ...],
+    "cost_turn": isize, "cost_move_straight": isize, "cost_move_diagonal": isize, "cost_move_multi": isize,
     "heuristic_distance": isize, "heuristic_straight": isize, "heuristic_diagonal": isize,
-    "all_points": isize, "open_doors": isize, "allow_diagonal_move": isize, "cost_limit": isize
+    "all_points": isize, "allow_diagonal_move": isize, "cost_limit": isize
 }
 
 #### Explanation of options
 
+##### Area boundaries
 `left`, `top`, `right`, `bottom` - the boundaries of the search area. 
 Default values are current world dimensions.
 
+##### Accuracy of pathfinding
 `accuracy_x`, `accuracy_y`, `accuracy_z` - the accuracy of finding the end point of the path.
 Default value is 0.
 
-`allow_diagonal_move` - allows you to enable or disable diagonal movement.
-Moving diagonally allows you to find better paths, but at the cost of slowing down twice, 
-because each step has to check not 4 possible directions, but 8.
-Default value is `false`.
+
+##### Advanced passability checking flags
+`flags_walk`, `flags_ingore` - a set of flags that allows you to change the passability check for certain tiles. 
+Default values - is empty.
+`flags_walk` - tiles with these flags can be walked on as if on a surface.
+`flags_ignore` - tiles with these flags will simply be ignored. It's like they just don't exist.
+
+Flags can now take the following values - `Impassable`, `Surface`, `Wet`, `HoverOver`, `Door`, `Wall`.
+
+With the default values, the path will be routed normally without passing through doors.
+
+###### flags_walk
+if you set "flags_walk": ["Wet"], then the path can pass through the water.
+if you set "flags_walk": ["HoverOver"], then the path will be laid, including along gargolye flight paths
+If you set "flags_walk": ["Impassable"], this is the strongest option, in which it will be possible to walk on all tiles, 
+but not `HoverOver`, for flying it must be set explicitly.
+
+###### flags_ignore
+
+if you set "flags_ignore": ["Door"], all doors will be considered passable when pathfinding. 
+This is the most useful option.
+
+You can also set other flags, such as `Wall` or `Impassable`, 
+this will allow the search for a path to ignore the walls of houses or in general all impassable objects, 
+such as trees or stones. But this makes little sense.
+
+While it is not possible to set pathfinding to water only, such as for sea serpent.
+
+
+##### Movement cost
 
  `cost_turn`, `cost_move_straight`, `cost_move_diagonal` - cost of moving and turning (changing direction).
 The default value is 1. 
@@ -150,6 +179,14 @@ a route will be built that meets these requirements.
 `cost_limit` - allows you to set limit of the cost, but for this limit to work, `cost_` values must be greater than 0
 Default value somewhere around `INT_MAX`
 
+`cost_move_multi` - cost of moving through the tiles occupied by a multi-object.
+Default value is 0.
+
+To avoid going through houses, set this option to a value greater than moving and turning cost.
+This won't completely prevent traversing them, but it will make it more expensive and the pathfinder will avoid it.
+
+
+#### Heuristic options
 
 `heuristic_distance` - specifies a function that measures the distance between two points "in a straight line".
 Default value is "Diagonal".
@@ -183,6 +220,11 @@ Default value is 5.
 `all_points` - if set to `true`, then the result of the path search will include not only the path, but also all explored points in random order. 
 This allows you to explore a certain area and get all the tiles available in it.
 Default value is `false`
+
+`allow_diagonal_move` - allows you to enable or disable diagonal movement.
+Moving diagonally allows you to find better paths, but at the cost of slowing down twice, 
+because each step has to check not 4 possible directions, but 8.
+Default value is `false`.
 
 
 Options not described most likely do not work.
