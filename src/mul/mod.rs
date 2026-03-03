@@ -5,6 +5,8 @@ pub mod uop_mapdata;
 pub mod staticdata;
 pub mod multidata;
 pub mod colordata;
+pub mod hues;
+pub mod art;
 
 use std::mem;
 
@@ -26,3 +28,5 @@ pub use tiledata::TileData;
 pub use mapdata::Land;
 pub use staticdata::Static;
 pub use multidata::Multi;
+pub use hues::HuesData;
+pub use art::{ArtSprite, ArtLoader};
