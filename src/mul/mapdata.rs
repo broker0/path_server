@@ -5,7 +5,7 @@ use std::io::{BufReader, Read, Seek};
 use std::mem;
 use std::path::Path;
 use log::trace;
-use crate::mulreader::{mul_read_i8, mul_read_u16, mul_read_u32, mul_read_u64, get_file_path_ci, get_world_file_path};
+use crate::mulreader::{mul_read_i8, mul_read_u16, mul_read_u32, mul_read_u64, get_world_file_path};
 use crate::uop_mapdata::{UopHeader, UopEntryHeader, UopEntry, uop_hash};
 use std::fs;
 use std::fs::File;

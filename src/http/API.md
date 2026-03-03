@@ -119,7 +119,8 @@ All fields are optional and allow you to change the default settings.
     "flags_walk": [flag, ...], "flags_ignore": [flag, ...],
     "cost_turn": isize, "cost_move_straight": isize, "cost_move_diagonal": isize, "cost_move_multi": isize,
     "heuristic_distance": isize, "heuristic_straight": isize, "heuristic_diagonal": isize,
-    "all_points": isize, "allow_diagonal_move": isize, "cost_limit": isize
+    "all_points": isize, "allow_diagonal_move": isize, "cost_limit": isize,
+    "time_limit": isize,
 }
 
 #### Explanation of options
@@ -216,10 +217,12 @@ The higher the value, the faster the path will be found, but at the cost of wors
 `heuristic_diagonal` is only used if `heuristic_distance` set to "Diagonal".
 Default value is 5.
 
-
 `all_points` - if set to `true`, then the result of the path search will include not only the path, but also all explored points in random order. 
 This allows you to explore a certain area and get all the tiles available in it.
 Default value is `false`
+
+`time_limit` - path search time limit in milliseconds. If the search time is exceeded, 
+it will be aborted and the best found path will be returned.
 
 `allow_diagonal_move` - allows you to enable or disable diagonal movement.
 Moving diagonally allows you to find better paths, but at the cost of slowing down twice, 

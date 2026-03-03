@@ -321,6 +321,7 @@ impl<'a> WorldSurveyor<'a> {
         let bottom = options.bottom.unwrap_or(self.model.base.height() as isize);
 
         let all_points = options.all_points.unwrap_or(false);
+        let time_limit = options.time_limit.unwrap_or(isize::MAX) as u128;
 
         let dist_func = |dx: isize, dy: isize| {
             match h_dist {
@@ -376,9 +377,17 @@ impl<'a> WorldSurveyor<'a> {
             let Position(curr_x, curr_y, curr_z) = curr_pos;
 
             cnt += 1;
+            if cnt % 1000 == 0 {
+                if start_time.elapsed().as_millis() >= time_limit {
+                    warn!("search time limit reached: {}ms", time_limit);
+                    break;
+                }
+            }
+
             if cnt % 100000 == 0 {
                 debug!("{cnt} ({curr_x} {curr_y}) current score {curr_fval}, frontier len {}", frontier.len());
             }
+
 
             // check if the current position has been visited before
             match visited.entry(curr_pos) {

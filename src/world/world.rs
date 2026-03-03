@@ -4,7 +4,7 @@ use crate::staticdata::StaticTile;
 use crate::world::tiles::DynamicWorldObject;
 use crate::world::{TileShape, TileType};
 use crate::*;
-use crate::mulreader::{get_file_path_ci, get_world_file_path};
+use crate::mulreader::{get_world_file_path};
 use std::fs;
 
 use log::{debug, trace, warn};

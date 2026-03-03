@@ -59,7 +59,7 @@ class TraceOptions:
                  accuracy_x=None, accuracy_y=None, accuracy_z=None,
                  cost_turn=None, cost_move_straight=None, cost_move_diagonal=None, cost_limit=None,
                  heuristic_distance=None, heuristic_straight=None, heuristic_diagonal=None,
-                 allow_diagonal_move=None, all_points=None, open_door=None
+                 allow_diagonal_move=None, all_points=None, open_door=None, time_limit=None
                  ):
         self.left = left
         self.top = top
@@ -82,6 +82,7 @@ class TraceOptions:
 
         self.all_points = all_points
         self.open_door = open_door
+        self.time_limit = time_limit
 
     def opts(self):
         return {k: v for (k, v) in self.__dict__.items() if v is not None}

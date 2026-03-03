@@ -71,6 +71,7 @@ pub struct TraceOptions {
     // misc
     pub all_points: Option<bool>,
     pub allow_diagonal_move: Option<bool>,
+    pub time_limit: Option<isize>,
     // movement cost
     pub cost_limit: Option<isize>,
     pub cost_turn: Option<isize>,
@@ -101,6 +102,7 @@ impl TraceOptions {
 
             all_points: None,
             allow_diagonal_move: None,
+            time_limit: None,
 
             cost_limit: None,
             cost_turn: None,
