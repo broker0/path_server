@@ -7,6 +7,7 @@ class Program
     public static extern bool start_path_server_ex(
         [MarshalAs(UnmanagedType.LPUTF8Str)] string dataPath,
         [MarshalAs(UnmanagedType.LPUTF8Str)] string uiPath,
+        [MarshalAs(UnmanagedType.LPUTF8Str)] string httpAddress,
         ushort httpPort
     );
 
@@ -20,7 +21,7 @@ class Program
         string uiFile = "www/ui.html";
         ushort httpPort = 3000;
 
-        bool result = start_path_server_ex(dataPath, uiFile, httpPort);
+        bool result = start_path_server_ex(dataPath, uiFile, httpAddress, httpPort);
 
         if (result)
         {

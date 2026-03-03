@@ -23,7 +23,7 @@ lazy_static! {
 }
 
 
-fn _start_path_server(data_path: &Path, ui_file: PathBuf, http_port: u16) -> bool {
+fn _start_path_server(data_path: &Path, ui_file: PathBuf, http_address: String, http_port: u16) -> bool {
     info!("try start path server");
     {
         let mut control = SERVER_CONTROL.lock().unwrap();
@@ -34,7 +34,7 @@ fn _start_path_server(data_path: &Path, ui_file: PathBuf, http_port: u16) -> boo
 
         let world_model = Arc::new(WorldModel::new(data_path));
 
-        *control = http::server::run_service(world_model, ui_file, http_port);
+        *control = http::server::run_service(world_model, ui_file, http_address, http_port);
         debug!("path_server started");
     }
 
@@ -44,17 +44,19 @@ fn _start_path_server(data_path: &Path, ui_file: PathBuf, http_port: u16) -> boo
 
 #[no_mangle]
 pub extern "C" fn start_path_server() -> bool {
-    _start_path_server(&Path::new("."), PathBuf::from("www/ui.html"), 3000)
+    _start_path_server(&Path::new("."), PathBuf::from("www/ui.html"), "127.0.0.1".to_string(), 3000)
 }
 
 
 #[no_mangle]
-pub extern "C" fn start_path_server_ex(data_path: *const c_char, ui_file: *const c_char, http_port: u16) -> bool {
+pub extern "C" fn start_path_server_ex(data_path: *const c_char, ui_file: *const c_char, http_address: *const c_char, http_port: u16) -> bool {
     let data_path =  unsafe { CStr::from_ptr(data_path) }.to_str().unwrap();
     let ui_file = unsafe { CStr::from_ptr(ui_file) }.to_str().unwrap();
+    let http_address = unsafe { CStr::from_ptr(http_address) }.to_str().unwrap();
 
-    _start_path_server(&Path::new(data_path), PathBuf::from(ui_file), http_port)
+    _start_path_server(&Path::new(data_path), PathBuf::from(ui_file), http_address.to_string(), http_port)
 }
+
 
 
 #[no_mangle]
