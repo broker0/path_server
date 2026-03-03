@@ -5,7 +5,7 @@ use std::io::{BufReader, Read, Seek};
 use std::mem;
 use std::path::Path;
 use log::trace;
-use crate::mulreader::{mul_read_i8, mul_read_u16, mul_read_u32, mul_read_u64, get_file_path_ci};
+use crate::mulreader::{mul_read_i8, mul_read_u16, mul_read_u32, mul_read_u64, get_file_path_ci, get_world_file_path};
 use crate::uop_mapdata::{UopHeader, UopEntryHeader, UopEntry, uop_hash};
 use std::fs;
 use std::fs::File;
@@ -52,7 +52,7 @@ impl Land {
         y_blocks: usize,
     ) -> Result<Self, Error> {
         trace!("Land::read_mul");
-        let path = get_file_path_ci(data_path, &format!("map{world}.mul"));
+        let path = get_world_file_path(data_path, "map", world, ".mul");
         let f = &mut BufReader::new(File::open(path)?);
 
 
@@ -77,7 +77,7 @@ impl Land {
         y_blocks: usize,
     ) -> Result<Self, Error> {
         trace!("Land::read_uop");
-        let path = get_file_path_ci(data_path, &format!("map{world}LegacyMUL.uop"));
+        let path = get_world_file_path(data_path, "map", world, "LegacyMUL.uop");
         let f = &mut BufReader::new(File::open(path)?);
 
 
@@ -143,7 +143,7 @@ impl Land {
     }
 
     pub fn calc_mul_width(data_path: &Path, world: u8, y_blocks: usize) -> usize {
-        let path = get_file_path_ci(data_path, &format!("map{world}.mul"));
+        let path = get_world_file_path(data_path, "map", world, ".mul");
         let meta = fs::metadata(path).unwrap();
         let fsize = meta.len() as usize;
 
@@ -153,7 +153,7 @@ impl Land {
     }
 
     pub fn calc_uop_width(data_path: &Path, world: u8, y_blocks: usize) -> usize {
-        let path = get_file_path_ci(data_path, &format!("map{world}LegacyMUL.uop"));
+        let path = get_world_file_path(data_path, "map", world, "LegacyMUL.uop");
         let f =
             &mut BufReader::new(File::open(path).unwrap());
 

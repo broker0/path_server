@@ -4,7 +4,7 @@ use crate::staticdata::StaticTile;
 use crate::world::tiles::DynamicWorldObject;
 use crate::world::{TileShape, TileType};
 use crate::*;
-use crate::mulreader::get_file_path_ci;
+use crate::mulreader::{get_file_path_ci, get_world_file_path};
 use std::fs;
 
 use log::{debug, trace, warn};
@@ -56,14 +56,14 @@ impl StaticWorld {
         width: usize,
         height: usize,
     ) -> Option<(bool, usize, usize)> {
-        match fs::metadata(get_file_path_ci(data_path, &format!("map{world}.mul"))) {
+        match fs::metadata(get_world_file_path(data_path, "map", world, ".mul")) {
             Ok(_) => {
                 let width = Land::calc_mul_width(data_path, world, height);
                 debug!("found MUL file for world {world} with size {width}x{height} blocks");
                 Some((true, width, height))
             }
 
-            Err(_) => match fs::metadata(get_file_path_ci(data_path, &format!("map{world}LegacyMUL.uop"))) {
+            Err(_) => match fs::metadata(get_world_file_path(data_path, "map", world, "LegacyMUL.uop")) {
                 Ok(_) => {
                     let width = Land::calc_uop_width(data_path, world, height);
                     debug!("found UOP file for world {world} with size {width}x{height} blocks");

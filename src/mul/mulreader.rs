@@ -85,3 +85,23 @@ pub fn get_file_path_ci(dir: &Path, filename: &str) -> PathBuf {
     path
 }
 
+/// Resolves a world-specific filename (e.g., map1.mul) relative to `dir`.
+/// If the requested `world` is 1 and the file does not exist, it falls back to world 0.
+pub fn get_world_file_path(dir: &Path, prefix: &str, world: u8, extension: &str) -> PathBuf {
+    let filename = format!("{prefix}{world}{extension}");
+    let path = get_file_path_ci(dir, &filename);
+    if path.exists() {
+        return path;
+    }
+
+    if world == 1 {
+        let fallback_filename = format!("{prefix}0{extension}");
+        let fallback_path = get_file_path_ci(dir, &fallback_filename);
+        if fallback_path.exists() {
+            return fallback_path;
+        }
+    }
+
+    path
+}
+
