@@ -39,7 +39,7 @@ fn initialize_logging(loglevel: LevelFilter, quiet: bool, logfile: Option<&Strin
 }
 
 
-fn parse_cmd_args() -> (PathBuf, PathBuf, u16, bool) {
+fn parse_cmd_args() -> (PathBuf, PathBuf, String, u16, bool) {
     let matches = command!()
         .next_line_help(true)
         .arg(
@@ -77,7 +77,14 @@ fn parse_cmd_args() -> (PathBuf, PathBuf, u16, bool) {
                 .help("Sets the filename with web-ui.")
         )
         .arg(
-            arg!(-p --port)
+            arg!(-a --address <ip>)
+                .required(false)
+                .default_value("127.0.0.1")
+                .action(ArgAction::Set)
+                .help("Sets the http server address.")
+        )
+        .arg(
+            arg!(-p --port <port>)
                 .required(false)
                 .default_value("3000")
                 .action(ArgAction::Set)
@@ -128,20 +135,22 @@ fn parse_cmd_args() -> (PathBuf, PathBuf, u16, bool) {
 
     let mul_dir = PathBuf::from(matches.get_one::<String>("data").unwrap());
     let ui_file = PathBuf::from(matches.get_one::<String>("ui").unwrap());
+    let address = matches.get_one::<String>("address").unwrap().to_string();
     let nogui = matches.get_flag("nogui");
 
-    (mul_dir, ui_file, port, nogui)
+    (mul_dir, ui_file, address, port, nogui)
 }
 
 
-fn start(data_path: &Path, ui_file: PathBuf, http_port: u16, nogui: bool) {
+fn start(data_path: &Path, ui_file: PathBuf, http_address: String, http_port: u16, nogui: bool) {
     let start = Instant::now();
 
     info!("loading data from files, creating the world...");
     let world_model = Arc::new(WorldModel::new(&data_path));
     info!("the creation completed in {:?}", start.elapsed());
 
-    let control = http::server::run_service(world_model.clone(), ui_file, http_port);
+    let control = http::server::run_service(world_model.clone(), ui_file, http_address, http_port);
+
     match control {
         None => {
             error!("failed to start http server");
@@ -165,6 +174,7 @@ fn start(data_path: &Path, ui_file: PathBuf, http_port: u16, nogui: bool) {
 
 
 fn main() {
-    let (data_path, ui_file, http_port, nogui) = parse_cmd_args();
-    start(&data_path, ui_file, http_port, nogui);
+    let (data_path, ui_file, http_address, http_port, nogui) = parse_cmd_args();
+    start(&data_path, ui_file, http_address, http_port, nogui);
 }
+

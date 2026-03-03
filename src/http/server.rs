@@ -503,8 +503,9 @@ async fn handle_request(api: Arc<ApiHandler>, req: Request<Body>) -> Result<Resp
 }
 
 
-async fn http_svc(model: Arc<WorldModel>, ui_file: PathBuf, http_port: u16, http_stop: Receiver<()>) {
-    let addr: SocketAddr = ([127, 0, 0, 1], http_port).into();
+async fn http_svc(model: Arc<WorldModel>, ui_file: PathBuf, http_address: String, http_port: u16, http_stop: Receiver<()>) {
+    let addr: SocketAddr = format!("{}:{}", http_address, http_port).parse().expect("Invalid address/port");
+
 
     let api_handler = Arc::new(ApiHandler::new(model, ui_file));
 
@@ -536,7 +537,7 @@ async fn http_svc(model: Arc<WorldModel>, ui_file: PathBuf, http_port: u16, http
 }
 
 
-pub fn http_server_service(model: Arc<WorldModel>, ui_file: PathBuf, http_port: u16, http_stop: Receiver<()>) {
+pub fn http_server_service(model: Arc<WorldModel>, ui_file: PathBuf, http_address: String, http_port: u16, http_stop: Receiver<()>) {
     // start http service in single thread runtime
     let rt = tokio::runtime::Builder::new_current_thread()
         .enable_all()
@@ -546,19 +547,22 @@ pub fn http_server_service(model: Arc<WorldModel>, ui_file: PathBuf, http_port: 
         .unwrap();
 
     // block thread while service is running
-    rt.block_on(http_svc(model, ui_file, http_port, http_stop));
+    rt.block_on(http_svc(model, ui_file, http_address, http_port, http_stop));
 }
 
 
-pub fn run_service(world_model: Arc<WorldModel>, ui_file: PathBuf, http_port: u16) -> Option<ServerControl> {
+
+pub fn run_service(world_model: Arc<WorldModel>, ui_file: PathBuf, http_address: String, http_port: u16) -> Option<ServerControl> {
     let (http_stop_tx, http_stop_rx) = tokio::sync::oneshot::channel::<()>();
 
     let handle = {
         let model = world_model.clone();
+        let address = http_address.clone();
         std::thread::spawn(move || {
-            http_server_service(model, ui_file, http_port, http_stop_rx);
+            http_server_service(model, ui_file, address, http_port, http_stop_rx);
         })
     };
+
 
     Some(ServerControl::new(http_stop_tx, handle))
 }
