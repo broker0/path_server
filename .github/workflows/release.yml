@@ -3,67 +3,41 @@ name: Release
 
 on:
   release:
-    types: [created]
-    
-    
+    types: [published]
+
+permissions:
+  contents: write
+
 jobs:
   release:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Get release
-        id: get_release
-        uses: bruceadams/get-release@v1.3.2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
-      - uses: actions/checkout@v3
-      
-      - uses: actions-rs/toolchain@v1
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
-          target: x86_64-pc-windows-gnu
-      
-      - uses: actions-rs/cargo@v1
-        with:
-          use-cross: true
-          command: build
-          args: --target x86_64-pc-windows-gnu --release --bins --lib
-      - name: Copy files
+          targets: x86_64-pc-windows-gnu
+
+      - name: Install cross
+        uses: taiki-e/install-action@cross
+
+      - name: Build
+        run: cross build --target x86_64-pc-windows-gnu --release --bins --lib
+
+      - name: Prepare archives
         run: |
           cp target/x86_64-pc-windows-gnu/release/path_server.exe .
           cp target/x86_64-pc-windows-gnu/release/path_server_lib.dll .
-      
-      - uses: vimtor/action-zip@v1
-        with:
-          files: path_server.exe www/
-          recursive: false
-          dest: path_server.zip
-      
-      - uses: vimtor/action-zip@v1
-        with:
-          files: path_server_lib.dll www/ui.html
-          recursive: false
-          dest: path_server_lib.zip
-
-      - name: Upload Release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}        
-        with:
-          upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_path: ./path_server.zip
-          asset_name: path_server.zip
-          asset_content_type: application/zip
           
-      - name: Upload Release Lib
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}        
+          zip -r path_server.zip path_server.exe www/
+          zip -r path_server_lib.zip path_server_lib.dll www/ui.html
+
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v2
         with:
-          upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_path: ./path_server_lib.zip
-          asset_name: path_server_lib.zip
-          asset_content_type: application/zip
-
-
+          files: |
+            path_server.zip
+            path_server_lib.zip
