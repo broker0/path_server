@@ -57,7 +57,7 @@ class TraceOptions:
     def __init__(self,
                  left=None, top=None, right=None, bottom=None,
                  accuracy_x=None, accuracy_y=None, accuracy_z=None,
-                 cost_turn=None, cost_move_straight=None, cost_move_diagonal=None,
+                 cost_turn=None, cost_move_straight=None, cost_move_diagonal=None, cost_limit=None,
                  heuristic_distance=None, heuristic_straight=None, heuristic_diagonal=None,
                  allow_diagonal_move=None, all_points=None, open_door=None
                  ):
@@ -74,6 +74,7 @@ class TraceOptions:
         self.cost_turn = cost_turn
         self.cost_move_straight = cost_move_straight
         self.cost_move_diagonal = cost_move_diagonal
+        self.cost_limit = cost_limit
 
         self.heuristic_distance = heuristic_distance
         self.heuristic_straight = heuristic_straight
