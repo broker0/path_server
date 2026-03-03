@@ -1,4 +1,4 @@
-name: Rust
+name: Rust CI
 
 on:
   push:
@@ -10,15 +10,20 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
-
+  build_and_test:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
-      - name: Install fontconfig
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install -y libfontconfig1-dev
-      - name: Build binary
-        run: cargo build --release --verbose --bin path_server
-      - name: Build library
-        run: cargo build --release --verbose --lib
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build
+        run: cargo build --release --verbose --bin path_server --lib
