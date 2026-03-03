@@ -9,8 +9,8 @@ permissions:
   contents: write
 
 jobs:
-  release:
-    runs-on: ubuntu-latest
+  release-windows:
+    runs-on: windows-latest
 
     steps:
       - name: Checkout repository
@@ -18,22 +18,18 @@ jobs:
 
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: x86_64-pc-windows-gnu
-
-      - name: Install cross
-        uses: taiki-e/install-action@cross
 
       - name: Build
-        run: cross build --target x86_64-pc-windows-gnu --release --bins --lib
+        run: cargo build --release --bins --lib
 
       - name: Prepare archives
+        shell: pwsh
         run: |
-          cp target/x86_64-pc-windows-gnu/release/path_server.exe .
-          cp target/x86_64-pc-windows-gnu/release/path_server_lib.dll .
+          Copy-Item target\release\path_server.exe .
+          Copy-Item target\release\path_server_lib.dll .
           
-          zip -r path_server.zip path_server.exe www/
-          zip -r path_server_lib.zip path_server_lib.dll www/ui.html
+          Compress-Archive -Path path_server.exe, www -DestinationPath path_server.zip
+          Compress-Archive -Path path_server_lib.dll, www\ui.html -DestinationPath path_server_lib.zip
 
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v2
@@ -41,3 +37,4 @@ jobs:
           files: |
             path_server.zip
             path_server_lib.zip
+            
