@@ -1,13 +1,13 @@
+use crate::mul::{MulLookupIndexRecord, LOOKUP_IDX_RECORD_SIZE};
 use crate::{mul, MulSlice};
-use mul::mulreader::*;
+use log::{debug, trace};
+use mul::mulreader::{mul_read_i16, mul_read_u16, mul_read_u32, get_file_path_ci};
 use std::fs::File;
-use std::io::{Error};
+
 use std::io::BufReader;
+use std::io::Error;
 use std::mem;
 use std::path::Path;
-use log::{debug, trace};
-use crate::mul::{LOOKUP_IDX_RECORD_SIZE, MulLookupIndexRecord};
-
 
 #[repr(C, packed)]
 #[derive(Debug, Copy, Clone)]
@@ -29,7 +29,6 @@ pub struct MulMultiPart7090 {
     pub unknown: u32,
 }
 
-
 const MULTI_PART_SIZE: usize = mem::size_of::<MulMultiPart>();
 const MULTI_PART7090_SIZE: usize = mem::size_of::<MulMultiPart7090>();
 
@@ -42,7 +41,6 @@ pub struct MultiPart {
     pub flags: u32,
 }
 
-
 pub struct Multi {
     parts: Vec<MultiPart>,
     multis: Vec<Option<MulSlice>>,
@@ -51,14 +49,18 @@ pub struct Multi {
 impl Multi {
     pub fn read(data_path: &Path) -> Result<Self, Error> {
         trace!("Multi::read");
-        let f = File::open(data_path.join("multi.mul"))?;
+        let path = get_file_path_ci(data_path, "multi.mul");
+        let f = File::open(path)?;
         let f_size = f.metadata()?.len() as usize;
+
         let f = &mut BufReader::new(f);
 
         // read data file with information about tiles
-        let fi = File::open("multi.idx")?;
+        let path = get_file_path_ci(data_path, "multi.idx");
+        let fi = File::open(path)?;
         let fi_size = fi.metadata()?.len();
         let fi = &mut BufReader::new(fi);
+
 
         // calculate count of index records and MultTile in files
         let multi_idx_count = fi_size as usize / LOOKUP_IDX_RECORD_SIZE;
@@ -82,11 +84,15 @@ impl Multi {
             }
         }
 
-        if pre7090 == is7090  {
+        if pre7090 == is7090 {
             panic!("unable to determine version of multi.mul");
         }
 
-        let part_size = if is7090 { MULTI_PART7090_SIZE } else { MULTI_PART_SIZE };
+        let part_size = if is7090 {
+            MULTI_PART7090_SIZE
+        } else {
+            MULTI_PART_SIZE
+        };
         let multi_tiles_count = f_size / part_size;
         let mut result = Self {
             multis: Vec::with_capacity(multi_idx_count),
@@ -118,7 +124,7 @@ impl Multi {
                 flags: mul_read_u32(f)?,
             };
             if is7090 {
-                mul_read_u32(f)?;   // unknown flag in new format
+                mul_read_u32(f)?; // unknown flag in new format
             }
 
             result.parts.push(MultiPart {
@@ -126,7 +132,7 @@ impl Multi {
                 x: tile.x,
                 y: tile.y,
                 z: tile.z,
-                flags: tile.flags
+                flags: tile.flags,
             });
         }
 
@@ -136,7 +142,7 @@ impl Multi {
     pub fn multi_parts(&self, multi_id: u16) -> &[MultiPart] {
         match self.multis[multi_id as usize] {
             None => &[],
-            Some(MulSlice(index, count)) => &self.parts[index..(index+count)]
+            Some(MulSlice(index, count)) => &self.parts[index..(index + count)],
         }
     }
 }

@@ -332,8 +332,8 @@ impl<'a> WorldSurveyor<'a> {
         };
 
         let h_func = |position: &Position| {
-            let dx = (d_x -position.0).abs();
-            let dy = (d_y -position.1).abs();
+            let dx = (d_x - position.0).abs();
+            let dy = (d_y - position.1).abs();
             dist_func(dx, dy)
         };
 

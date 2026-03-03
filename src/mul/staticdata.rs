@@ -1,26 +1,25 @@
-use std::mem;
-use std::io::BufReader;
+use crate::mulreader::{mul_read_i8, mul_read_u16, mul_read_u32, mul_read_u8, get_file_path_ci};
 use std::fs::File;
-use std::io::{Error};
-use std::path::Path;
-use log::trace;
-use crate::{MulSlice};
-use crate::mul::MulLookupIndexRecord;
-use crate::mulreader::{mul_read_i8, mul_read_u16, mul_read_u32, mul_read_u8};
 
+use crate::MulSlice;
+use log::trace;
+use std::io::BufReader;
+use std::io::Error;
+use std::mem;
+use std::path::Path;
+use crate::mul::MulLookupIndexRecord;
 
 #[derive(Debug, Copy, Clone)]
 #[repr(C, packed)]
 struct MulStaticTile {
     static_tile: u16,
-    x: u8,  // offset inside block 0..7
+    x: u8, // offset inside block 0..7
     y: u8,
     z: i8,
     unknown1: u16,
 }
 
 const STATIC_TILE_SIZE: usize = mem::size_of::<MulStaticTile>();
-
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct StaticTile {
@@ -30,7 +29,6 @@ pub struct StaticTile {
     pub z: i8,
 }
 
-
 /// Static stores information about static objects in the world.
 /// The data is divided into 8x8 blocks, each block can have an arbitrary number of objects.
 /// A block is referenced by its index.
@@ -39,13 +37,19 @@ pub struct Static {
     blocks: Vec<Option<MulSlice>>,
 }
 
-
 impl Static {
-    pub fn read(data_path: &Path, world: u8, x_blocks: usize, y_blocks: usize) -> Result<Self, Error> {
+    pub fn read(
+        data_path: &Path,
+        world: u8,
+        x_blocks: usize,
+        y_blocks: usize,
+    ) -> Result<Self, Error> {
         trace!("Static::read");
         // read data file with information about tiles
-        let f = File::open(data_path.join(format!("statics{world}.mul")))?;
+        let path = get_file_path_ci(data_path, &format!("statics{world}.mul"));
+        let f = File::open(path)?;
         let f_size = f.metadata()?.len();
+
         let f = &mut BufReader::new(f);
 
         assert_eq!(f_size as usize % STATIC_TILE_SIZE, 0);
@@ -61,14 +65,19 @@ impl Static {
         for _ in 0..tiles_count {
             // read tile by tile from file
             let mul_tile = MulStaticTile {
-                static_tile: mul_read_u16(f)?,  // graphic is number of static tile
-                x: mul_read_u8(f)?,         // x,y is offset relative block (in range 0-7)
+                static_tile: mul_read_u16(f)?, // graphic is number of static tile
+                x: mul_read_u8(f)?,            // x,y is offset relative block (in range 0-7)
                 y: mul_read_u8(f)?,
                 z: mul_read_i8(f)?,         // z coordinate of this tile
                 unknown1: mul_read_u16(f)?, // unknown field
             };
 
-            let static_tile = StaticTile{ static_tile: mul_tile.static_tile, x: mul_tile.x, y: mul_tile.y, z: mul_tile.z };
+            let static_tile = StaticTile {
+                static_tile: mul_tile.static_tile,
+                x: mul_tile.x,
+                y: mul_tile.y,
+                z: mul_tile.z,
+            };
             result.statics.push(static_tile);
 
             // TODO filter duped tiles. yet doesn't work because deleting tiles breaks the index
@@ -83,7 +92,6 @@ impl Static {
             //     // println!("duped tile {static_tile:?}");
             // }
 
-
             // field `unknown1` seems not random
             let u = mul_tile.unknown1;
             if u != 0 {
@@ -91,9 +99,10 @@ impl Static {
             }
         }
 
-
         // read index file with information about blocks
-        let fi = &mut BufReader::new(File::open(data_path.join(format!("staidx{world}.mul")))?);
+        let path = get_file_path_ci(data_path, &format!("staidx{world}.mul"));
+        let fi = &mut BufReader::new(File::open(path)?);
+
 
         // let mut i = 0;
         // let mut n = 0;
@@ -118,9 +127,8 @@ impl Static {
 
                 let block_slice = if offset != 0xFFFF_FFFF {
                     // order this slice by coordinates, for binary search in the future
-                    result.statics[index..index+count].sort_by(|a, b| {
-                        (a.x, a.y, a.z).cmp(&(b.x, b.y, b.z))
-                    });
+                    result.statics[index..index + count]
+                        .sort_by(|a, b| (a.x, a.y, a.z).cmp(&(b.x, b.y, b.z)));
 
                     // n = offset + length;
                     Some(MulSlice(index, count))
@@ -144,7 +152,7 @@ impl Static {
         debug_assert!(self.statics.len() > index);
         let block_slice = &self.blocks[index];
         match block_slice {
-            Some(b) => &self.statics[b.0..b.0+b.1],
+            Some(b) => &self.statics[b.0..b.0 + b.1],
             None => &[],
         }
     }
@@ -174,9 +182,11 @@ impl Static {
         let p = |tile: &StaticTile| (tile.x, tile.y).cmp(&key);
 
         let left_index = slice.partition_point(|t| p(t) == std::cmp::Ordering::Less);
-        let count = slice[left_index..].iter().take_while(|tile| tile.x==ox && tile.y == oy).count();
+        let count = slice[left_index..]
+            .iter()
+            .take_while(|tile| tile.x == ox && tile.y == oy)
+            .count();
 
-        &slice[left_index..(left_index+count)]
+        &slice[left_index..(left_index + count)]
     }
-
 }

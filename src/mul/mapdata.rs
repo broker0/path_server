@@ -1,13 +1,14 @@
 use std::collections::HashMap;
+use std::io::Error;
+use std::io::SeekFrom;
 use std::io::{BufReader, Read, Seek};
-use std::fs::File;
-use std::io::{Error};
-use std::io::{SeekFrom};
-use std::{fs, mem};
+use std::mem;
 use std::path::Path;
 use log::trace;
-use crate::mulreader::{mul_read_i8, mul_read_u16, mul_read_u32, mul_read_u64};
+use crate::mulreader::{mul_read_i8, mul_read_u16, mul_read_u32, mul_read_u64, get_file_path_ci};
 use crate::uop_mapdata::{UopHeader, UopEntryHeader, UopEntry, uop_hash};
+use std::fs;
+use std::fs::File;
 
 
 #[repr(C, packed)]
@@ -40,17 +41,23 @@ pub type LandBlock = [[LandTile; 8]; 8];
 /// Can return a ref to LandBlock for the given index
 #[derive(Debug)]
 pub struct Land {
-    blocks: Vec<LandBlock>,  // blocks in same order as in file
+    blocks: Vec<LandBlock>, // blocks in same order as in file
 }
 
-
 impl Land {
-    pub fn read_mul(data_path: &Path, world: u8, x_blocks: usize, y_blocks: usize) -> Result<Self, Error> {
+    pub fn read_mul(
+        data_path: &Path,
+        world: u8,
+        x_blocks: usize,
+        y_blocks: usize,
+    ) -> Result<Self, Error> {
         trace!("Land::read_mul");
-        let f = &mut BufReader::new(File::open(data_path.join(format!("map{world}.mul")))?);
+        let path = get_file_path_ci(data_path, &format!("map{world}.mul"));
+        let f = &mut BufReader::new(File::open(path)?);
+
 
         let mut result = Land {
-            blocks: Vec::with_capacity(x_blocks*y_blocks),
+            blocks: Vec::with_capacity(x_blocks * y_blocks),
         };
 
         for _ in 0..x_blocks {
@@ -63,12 +70,19 @@ impl Land {
         Ok(result)
     }
 
-    pub fn read_uop(data_path: &Path, world: u8, x_blocks: usize, y_blocks: usize) -> Result<Self, Error> {
+    pub fn read_uop(
+        data_path: &Path,
+        world: u8,
+        x_blocks: usize,
+        y_blocks: usize,
+    ) -> Result<Self, Error> {
         trace!("Land::read_uop");
-        let f = &mut BufReader::new(File::open(data_path.join(format!("map{world}LegacyMUL.uop")))?);
+        let path = get_file_path_ci(data_path, &format!("map{world}LegacyMUL.uop"));
+        let f = &mut BufReader::new(File::open(path)?);
+
 
         let mut result = Land {
-            blocks: Vec::with_capacity(x_blocks*y_blocks),
+            blocks: Vec::with_capacity(x_blocks * y_blocks),
         };
 
         let entries = Land::read_uop_index(f)?;
@@ -85,11 +99,15 @@ impl Land {
                 let data_offset = entry.data_offset + entry.header_length as u64;
                 let data_size = entry.decompressed_length as usize;
                 let blocks = data_size / MUL_MAP_BLOCK_SIZE;
-                debug_assert_eq!(data_size % MUL_MAP_BLOCK_SIZE , 0, "file will not be read completely");
+                debug_assert_eq!(
+                    data_size % MUL_MAP_BLOCK_SIZE,
+                    0,
+                    "file will not be read completely"
+                );
 
                 f.seek(SeekFrom::Start(data_offset))?;
 
-                let blocks_to_read = blocks.min(max_block-result.blocks.len());
+                let blocks_to_read = blocks.min(max_block - result.blocks.len());
 
                 for _ in 0..blocks_to_read {
                     result.read_block(f)?;
@@ -105,13 +123,16 @@ impl Land {
 
     #[inline]
     fn read_block<R: Read>(&mut self, reader: &mut R) -> Result<(), Error> {
-        let mut block: LandBlock = [[LandTile {land_tile: 0, z: 0}; 8]; 8];
+        let mut block: LandBlock = [[LandTile { land_tile: 0, z: 0 }; 8]; 8];
 
         let _header = mul_read_u32(reader)?; // unused header
-        // loop over 8x8 tiles
+                                             // loop over 8x8 tiles
         for y in 0..8 {
             for x in 0..8 {
-                block[x][y] = LandTile {land_tile: mul_read_u16(reader)?, z: mul_read_i8(reader)?};
+                block[x][y] = LandTile {
+                    land_tile: mul_read_u16(reader)?,
+                    z: mul_read_i8(reader)?,
+                };
             }
         }
 
@@ -122,15 +143,20 @@ impl Land {
     }
 
     pub fn calc_mul_width(data_path: &Path, world: u8, y_blocks: usize) -> usize {
-        let meta = fs::metadata(data_path.join(format!("map{world}.mul"))).unwrap();
+        let path = get_file_path_ci(data_path, &format!("map{world}.mul"));
+        let meta = fs::metadata(path).unwrap();
         let fsize = meta.len() as usize;
+
         let blocks = fsize / MUL_MAP_BLOCK_SIZE;
 
         blocks / y_blocks
     }
 
     pub fn calc_uop_width(data_path: &Path, world: u8, y_blocks: usize) -> usize {
-        let f = &mut BufReader::new(File::open(data_path.join(format!("map{world}LegacyMUL.uop"))).unwrap());
+        let path = get_file_path_ci(data_path, &format!("map{world}LegacyMUL.uop"));
+        let f =
+            &mut BufReader::new(File::open(path).unwrap());
+
         let entries = Land::read_uop_index(f).unwrap();
 
         let mut entry_num = 0;
@@ -152,7 +178,7 @@ impl Land {
         blocks / y_blocks
     }
 
-    fn read_uop_index<R: Read+Seek>(reader: &mut R) -> Result<HashMap<u64, UopEntry>, Error> {
+    fn read_uop_index<R: Read + Seek>(reader: &mut R) -> Result<HashMap<u64, UopEntry>, Error> {
         let uop_header = UopHeader {
             magic: mul_read_u32(reader)?,
             version: mul_read_u32(reader)?,
@@ -166,7 +192,8 @@ impl Land {
         assert_eq!(magic, 0x0050594D, "file signature is invalid");
 
         reader.seek(SeekFrom::Start(uop_header.next_block_offset))?;
-        UopEntryHeader { // Unused data but needs to be read
+        UopEntryHeader {
+            // Unused data but needs to be read
             entry_count: mul_read_u32(reader)?,
             next_block_offset: mul_read_u64(reader)?,
         };
@@ -194,4 +221,3 @@ impl Land {
         &self.blocks[index]
     }
 }
-

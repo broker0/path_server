@@ -147,9 +147,11 @@ impl TileData {
             static_tiles: Vec::with_capacity(16384),
         };
 
-        let f = File::open(data_path.join("tiledata.mul"))?;
+        let path = get_file_path_ci(data_path, "tiledata.mul");
+        let f = File::open(path)?;
         let file_len = f.metadata()?.len();
         let f = &mut BufReader::new(f);
+
 
         let is7090 = file_len == 3_188_736;
 

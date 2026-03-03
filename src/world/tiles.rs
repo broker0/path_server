@@ -73,7 +73,7 @@ impl Ord for DynamicWorldObject {
 
             (Self::MultiPart { x: x1, y: y1, z: z1, tile: tile1, parent: parent1, counter: counter1 },
              Self::MultiPart { x: x2, y: y2, z: z2, tile: tile2, parent: parent2, counter: counter2 }) =>
-                    (x1, y1, z1, tile1, parent1, counter1).cmp(&(x2, y2, z2, tile2, parent2, counter2)),
+                    (x1, y1, z1, counter1, parent1, tile1).cmp(&(x2, y2, z2, counter2, parent2, tile2)),
 
             (Self::MultiPart { x: x1, y: y1, z: z1, .. },
              Self::GameObject { x: x2, y: y2, z: z2, .. }) |
@@ -96,7 +96,7 @@ impl Ord for DynamicWorldObject {
     }
 }
 
-#[derive(Ord, PartialOrd, Eq, PartialEq, Copy, Clone)]
+#[derive(Ord, PartialOrd, Eq, PartialEq, Copy, Clone, Debug)]
 pub enum TileType {
     MapTile(u16),
     ObjectTile(u16),
@@ -112,7 +112,7 @@ impl TileType {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub enum TileShape {
     Slope {z_base: i8, z_stand:i8, z_top: i8, passable: bool, },
     Surface {z_base: i8, z_stand: i8, passable: bool, },
@@ -206,7 +206,7 @@ impl TileShape {
 
 /// base representation of the tile, stores information about the type of tile and its number
 /// and also stores information that is used when checking the movement
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct WorldTile {
     pub tile: TileType,
     pub shape: TileShape,

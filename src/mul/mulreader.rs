@@ -1,6 +1,8 @@
+use std::fs::{self};
+use std::io::Error;
 use std::io::Read;
 use std::mem;
-use std::io::Error;
+use std::path::{Path, PathBuf};
 
 #[inline]
 pub fn mul_read_u8<R: Read>(reader: &mut R) -> Result<u8, Error> {
@@ -48,7 +50,6 @@ pub fn mul_read_i32<R: Read>(reader: &mut R) -> Result<i32, Error> {
     Ok(i32::from_le_bytes(buff))
 }
 
-
 #[inline]
 pub fn mul_read_u64<R: Read>(reader: &mut R) -> Result<u64, Error> {
     type V = u64;
@@ -57,10 +58,30 @@ pub fn mul_read_u64<R: Read>(reader: &mut R) -> Result<u64, Error> {
     Ok(V::from_le_bytes(buff))
 }
 
-
 #[inline]
 pub fn mul_read_fixed_str20<R: Read>(reader: &mut R) -> Result<[u8; 20], Error> {
     let mut buff = [0; 20];
     reader.read_exact(&mut buff)?;
     Ok(buff)
 }
+
+/// Resolves a filename relative to `dir` case-insensitively.
+/// If nothing matches, it returns the original path
+pub fn get_file_path_ci(dir: &Path, filename: &str) -> PathBuf {
+    let path = dir.join(filename);
+    if path.exists() {
+        return path;
+    }
+
+    let lower = filename.to_lowercase();
+    if let Ok(entries) = fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            if entry.file_name().to_string_lossy().to_lowercase() == lower {
+                return entry.path();
+            }
+        }
+    }
+    
+    path
+}
+
